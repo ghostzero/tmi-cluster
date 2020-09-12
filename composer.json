@@ -1,0 +1,13 @@
+{
+    "name": "ghostzero/tmi-cluster",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "René Preuß",
+            "email": "rene@preuss.io"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
