@@ -7,14 +7,14 @@ use Exception;
 use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Console\Command;
 
-class TmiCommand extends Command
+class TmiClusterCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'tmi';
+    protected $signature = 'tmi-cluster';
 
     /**
      * The console command description.

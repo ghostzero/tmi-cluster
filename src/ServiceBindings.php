@@ -12,6 +12,9 @@ trait ServiceBindings
      * @var array
      */
     public $serviceBindings = [
+        // General services...
+        Contracts\ClusterClient::class => TmiClusterClient::class,
+
         // Repository services...
         Contracts\SupervisorRepository::class => Repositories\SupervisorRepository::class,
         Contracts\CommandQueue::class => Repositories\RedisCommandQueue::class,

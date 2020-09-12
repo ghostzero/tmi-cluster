@@ -5,21 +5,21 @@ namespace GhostZero\TmiCluster\Commands;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use Illuminate\Console\Command;
 
-class TmiListCommand extends Command
+class TmiClusterPurgeCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'tmi:list';
+    protected $signature = 'tmi-cluster:purge';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'List all active supervisors.';
+    protected $description = 'Purge all stale supervisors.';
 
     /**
      * Execute the console command.
@@ -28,13 +28,9 @@ class TmiListCommand extends Command
      */
     public function handle(): int
     {
-        $supervisors = app(SupervisorRepository::class)
-            ->all(['id', 'name'])
-            ->toArray();
+        app(SupervisorRepository::class)->flushStale();
 
-        $headers = ['ID', 'Name'];
-
-        $this->table($headers, $supervisors);
+        $this->info('Stale supervisors have been purged.');
 
         return 0;
     }

@@ -60,8 +60,8 @@ class TmiClusterServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
-                Commands\TmiCommand::class,
-                Commands\TmiWorkCommand::class,
+                Commands\TmiClusterCommand::class,
+                Commands\TmiClusterProcessCommand::class,
             ]);
         }
     }
