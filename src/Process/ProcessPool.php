@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Process;
+namespace GhostZero\TmiCluster\Process;
 
 use Carbon\CarbonImmutable;
 use Closure;
@@ -22,12 +22,12 @@ class ProcessPool implements Countable
         $this->output = $output;
     }
 
-    public function count()
+    public function count(): int
     {
         return count($this->processes);
     }
 
-    public function monitor()
+    public function monitor(): void
     {
         $this->processes()->each(fn(IrcProcess $x) => $x->monitor());
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Process;
+namespace GhostZero\TmiCluster\Process;
 
 use Carbon\CarbonImmutable;
 use Closure;

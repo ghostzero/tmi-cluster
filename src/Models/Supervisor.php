@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace GhostZero\TmiCluster\Models;
 
-use App\Process\ProcessOptions;
-use App\Process\ProcessPool;
+use GhostZero\TmiCluster\Process\ProcessOptions;
+use GhostZero\TmiCluster\Process\ProcessPool;
 use Closure;
 use DomainException;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -33,7 +33,7 @@ class Supervisor extends Model
 
     public function __construct(array $attributes = [])
     {
-        $this->output = function () {
+        $this->output = static function () {
             //
         };
 
@@ -49,7 +49,7 @@ class Supervisor extends Model
         }
     }
 
-    public function monitor()
+    public function monitor(): void
     {
         $this->ensureNoDuplicateSupervisors();
 
@@ -62,17 +62,17 @@ class Supervisor extends Model
         }
     }
 
-    public function handleOutputUsing(Closure $output)
+    public function handleOutputUsing(Closure $output): void
     {
         $this->output = $output;
     }
 
-    public function scale(int $int)
+    public function scale(int $int): void
     {
         $this->pools()->each(fn(ProcessPool $x) => $x->scale($int));
     }
 
-    private function loop()
+    private function loop(): void
     {
         try {
             // todo process pending commands
@@ -98,7 +98,7 @@ class Supervisor extends Model
         }
     }
 
-    private function autoScale()
+    private function autoScale(): void
     {
         // app(AutoScale::class)->scale($this);
     }
@@ -108,19 +108,19 @@ class Supervisor extends Model
         return [$this->createSingleProcessPool(new ProcessOptions($this->options))];
     }
 
-    private function createSingleProcessPool(ProcessOptions $options)
+    private function createSingleProcessPool(ProcessOptions $options): ProcessPool
     {
         return new ProcessPool($options, function ($type, $line) {
             $this->output($type, $line);
         });
     }
 
-    public function output($type, $line)
+    public function output($type, $line): void
     {
         call_user_func($this->output, $type, $line);
     }
 
-    private function pools()
+    private function pools(): Collection
     {
         if (!$this->processPools) {
             $this->processPools = $this->createProcessPools();

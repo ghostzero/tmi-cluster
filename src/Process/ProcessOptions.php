@@ -1,8 +1,6 @@
 <?php
 
-
-namespace App\Process;
-
+namespace GhostZero\TmiCluster\Process;
 
 class ProcessOptions
 {

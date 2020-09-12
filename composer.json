@@ -1,13 +1,43 @@
 {
-    "name": "ghostzero/tmi-cluster",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "René Preuß",
-            "email": "rene@preuss.io"
-        }
-    ],
-    "minimum-stability": "dev",
-    "require": {}
+  "name": "ghostzero/tmi-cluster",
+  "description": "Laravel package to create a tmi cluster.",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "René Preuß",
+      "email": "rene@preuss.io"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "GhostZero\\TmiCluster\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "GhostZero\\TmiCluster\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": "^7.4",
+    "ghostzero/tmi": "1.0",
+    "illuminate/support": "^8.1",
+    "illuminate/console": "^8.1",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^6.0",
+    "phpunit/phpunit": "^9.3"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "GhostZero\\TmiCluster\\TmiClusterServiceProvider"
+      ],
+      "aliases": {
+        "TmiCluster": "GhostZero\\TmiCluster\\Facades\\TmiCluster"
+      }
+    }
+  }
 }

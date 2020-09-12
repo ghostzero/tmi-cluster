@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Console\Commands;
+namespace GhostZero\TmiCluster\Commands;
 
-use App\Models\Supervisor;
+use GhostZero\TmiCluster\Models\Supervisor;
 use Exception;
 use Illuminate\Console\Command;
 
-class IrcCommand extends Command
+class TmiCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'irc';
+    protected $signature = 'tmi';
 
     /**
      * The console command description.
