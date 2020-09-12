@@ -13,7 +13,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
         parent::setUp();
         // additional setup
 
-        $this->loadLaravelMigrations(['--database' => 'testbench']);
+        $this->artisan('migrate')->run();
     }
 
     protected function getPackageProviders($app)
