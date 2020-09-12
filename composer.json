@@ -24,6 +24,7 @@
     "ghostzero/tmi": "1.0",
     "illuminate/support": "^8.1",
     "illuminate/console": "^8.1",
+    "predis/predis": "^1.1",
     "ext-json": "*"
   },
   "require-dev": {
@@ -33,7 +34,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "GhostZero\\TmiCluster\\TmiClusterServiceProvider"
+        "GhostZero\\TmiCluster\\Providers\\TmiClusterServiceProvider"
       ],
       "aliases": {
         "TmiCluster": "GhostZero\\TmiCluster\\Facades\\TmiCluster"

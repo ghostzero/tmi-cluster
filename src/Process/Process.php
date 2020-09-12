@@ -4,18 +4,20 @@ namespace GhostZero\TmiCluster\Process;
 
 use Carbon\CarbonImmutable;
 use Closure;
+use GhostZero\TmiCluster\Events\UnableToLaunchProcess;
+use GhostZero\TmiCluster\Events\WorkerProcessRestarting;
 use Symfony\Component\Process\Exception\ExceptionInterface;
-use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Process as SystemProcess;
 
-class IrcProcess
+class Process
 {
-    private Process $process;
+    private SystemProcess $systemProcess;
     private Closure $output;
     private ?CarbonImmutable $restartAgainAt = null;
 
-    public function __construct(Process $process)
+    public function __construct(SystemProcess $systemProcess)
     {
-        $this->process = $process;
+        $this->systemProcess = $systemProcess;
         $this->output = function () {
             //
         };
@@ -23,7 +25,7 @@ class IrcProcess
 
     public function monitor(): void
     {
-        if ($this->process->isRunning() || $this->coolingDown()) {
+        if ($this->systemProcess->isRunning() || $this->coolingDown()) {
             return;
         }
 
@@ -34,8 +36,8 @@ class IrcProcess
 
     protected function restart()
     {
-        if ($this->process->isStarted()) {
-            //event(new WorkerProcessRestarting($this));
+        if ($this->systemProcess->isStarted()) {
+            event(new WorkerProcessRestarting($this));
             call_user_func($this->output, null, 'WorkerProcessRestarting');
         }
 
@@ -49,17 +51,17 @@ class IrcProcess
 
     public function stop(): void
     {
-        if ($this->process->isRunning()) {
-            $this->process->stop();
+        if ($this->systemProcess->isRunning()) {
+            $this->systemProcess->stop();
         }
     }
 
     protected function sendSignal($signal): void
     {
         try {
-            $this->process->signal($signal);
+            $this->systemProcess->signal($signal);
         } catch (ExceptionInterface $e) {
-            if ($this->process->isRunning()) {
+            if ($this->systemProcess->isRunning()) {
                 throw $e;
             }
         }
@@ -69,7 +71,7 @@ class IrcProcess
     {
         $this->handleOutputUsing($output)->cooldown();
 
-        $this->process->start($output);
+        $this->systemProcess->start($output);
 
         return $this;
     }
@@ -81,13 +83,13 @@ class IrcProcess
         }
 
         if ($this->restartAgainAt) {
-            $this->restartAgainAt = ! $this->process->isRunning()
+            $this->restartAgainAt = ! $this->systemProcess->isRunning()
                 ? CarbonImmutable::now()->addMinute()
                 : null;
 
-            if (! $this->process->isRunning()) {
+            if (! $this->systemProcess->isRunning()) {
                 call_user_func($this->output, null, 'UnableToLaunchProcess');
-                // event(new UnableToLaunchProcess($this));
+                event(new UnableToLaunchProcess($this));
             }
         } else {
             $this->restartAgainAt = CarbonImmutable::now()->addSecond();

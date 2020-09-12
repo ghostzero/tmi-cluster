@@ -13,7 +13,7 @@ class ProcessOptions
 
     public function toWorkerCommand(): string
     {
-        return IrcCommandString::fromOptions($this);
+        return CommandString::fromOptions($this);
     }
 
     public function getWorkingDirectory(): string

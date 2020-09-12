@@ -2,8 +2,9 @@
 
 namespace GhostZero\TmiCluster\Commands;
 
-use GhostZero\TmiCluster\Models\Supervisor;
+use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use Exception;
+use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Console\Command;
 
 class TmiCommand extends Command
@@ -40,7 +41,7 @@ class TmiCommand extends Command
     public function handle()
     {
         /** @var Supervisor $supervisor */
-        $supervisor = Supervisor::factory()->makeOne();
+        $supervisor = app(SupervisorRepository::class)->create();
 
         try {
             $supervisor->ensureNoDuplicateSupervisors();
@@ -57,8 +58,8 @@ class TmiCommand extends Command
 
     private function start(Supervisor $supervisor): int
     {
-        if ($supervisor->options['nice']) {
-            proc_nice($supervisor->options['nice']);
+        if ($supervisor->model->options['nice']) {
+            proc_nice($supervisor->model->options['nice']);
         }
 
         $supervisor->handleOutputUsing(function ($type, $line) {

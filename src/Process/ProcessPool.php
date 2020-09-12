@@ -7,7 +7,7 @@ use Closure;
 use Countable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Process as SystemProcess;
 
 class ProcessPool implements Countable
 {
@@ -29,7 +29,7 @@ class ProcessPool implements Countable
 
     public function monitor(): void
     {
-        $this->processes()->each(fn(IrcProcess $x) => $x->monitor());
+        $this->processes()->each(fn(Process $x) => $x->monitor());
     }
 
     public function processes(): Collection
@@ -87,7 +87,7 @@ class ProcessPool implements Countable
             });
     }
 
-    public function markForTermination(IrcProcess $process)
+    public function markForTermination(Process $process)
     {
         $this->terminatingProcesses[] = [
             'process' => $process, 'terminatedAt' => CarbonImmutable::now(),
@@ -116,11 +116,11 @@ class ProcessPool implements Countable
         return $this;
     }
 
-    protected function createProcess(): IrcProcess
+    protected function createProcess(): Process
     {
         Log::info($this->options->toWorkerCommand());
 
-        return new IrcProcess(Process::fromShellCommandline(
+        return new Process(SystemProcess::fromShellCommandline(
             $this->options->toWorkerCommand(), $this->options->getWorkingDirectory()
         )->setTimeout(null)->disableOutput());
     }

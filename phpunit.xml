@@ -6,7 +6,9 @@
         convertWarningsToExceptions="true"
         processIsolation="false" stopOnFailure="false">
     <php>
+        <env name="APP_ENV" value="testing"/>
         <env name="APP_KEY" value="AckfSECXIvnK5r28GVIWUAxmbBSjTsmF"/>
+        <env name="REDIS_CLIENT" value="predis"/>
     </php>
     <testsuites>
         <testsuite name="Library Program Test Suite">
