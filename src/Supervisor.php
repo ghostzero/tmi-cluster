@@ -93,12 +93,13 @@ class Supervisor
 
     private function autoScale(): void
     {
-        // app(AutoScale::class)->scale($this);
+        app(AutoScale::class)->scale($this);
     }
 
     private function createProcessPools(): array
     {
-        return [$this->createSingleProcessPool(new ProcessOptions($this->model->options))];
+        $options = new ProcessOptions($this->model->name, $this->model->options);
+        return [$this->createSingleProcessPool($options)];
     }
 
     private function createSingleProcessPool(ProcessOptions $options): ProcessPool

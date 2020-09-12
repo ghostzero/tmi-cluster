@@ -13,6 +13,7 @@ trait ServiceBindings
      */
     public $serviceBindings = [
         // General services...
+        AutoScale::class,
         Contracts\ClusterClient::class => TmiClusterClient::class,
 
         // Repository services...

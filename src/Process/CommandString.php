@@ -3,20 +3,18 @@
 namespace GhostZero\TmiCluster\Process;
 
 use GhostZero\TmiCluster\PhpBinary;
-use Illuminate\Support\Str;
 
 class CommandString
 {
-    public static string $command = 'exec @php artisan tmi:work';
+    public static string $command = 'exec @php artisan tmi-cluster:process';
 
-    public static function fromOptions(ProcessOptions $options): string
+    public static function fromOptions(ProcessOptions $options, string $uuid): string
     {
         $command = str_replace('@php', PhpBinary::path(), static::$command);
 
         return sprintf(
-            "%s --uuid %s",
-            $command,
-            Str::uuid()
+            "%s %s --supervisor=%s",
+            $command, $uuid, $options->getSupervisor()
         );
     }
 }

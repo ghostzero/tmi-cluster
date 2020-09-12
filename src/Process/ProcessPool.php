@@ -7,6 +7,7 @@ use Closure;
 use Countable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\Process\Process as SystemProcess;
 
 class ProcessPool implements Countable
@@ -118,10 +119,10 @@ class ProcessPool implements Countable
 
     protected function createProcess(): Process
     {
-        Log::info($this->options->toWorkerCommand());
+        Log::info($this->options->toWorkerCommand($uuid = Str::uuid()));
 
         return new Process(SystemProcess::fromShellCommandline(
-            $this->options->toWorkerCommand(), $this->options->getWorkingDirectory()
+            $this->options->toWorkerCommand($uuid), $this->options->getWorkingDirectory()
         )->setTimeout(null)->disableOutput());
     }
 

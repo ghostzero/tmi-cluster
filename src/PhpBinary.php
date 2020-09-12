@@ -9,7 +9,7 @@ class PhpBinary
      *
      * @return string
      */
-    public static function path()
+    public static function path(): string
     {
         $escape = '\\' === DIRECTORY_SEPARATOR ? '"' : '\'';
 
