@@ -10,5 +10,5 @@ interface ClusterClient
      * @param ClusterClientOptions $options
      * @return int
      */
-    public function connect(ClusterClientOptions $options): int;
+    public static function connect(ClusterClientOptions $options): int;
 }

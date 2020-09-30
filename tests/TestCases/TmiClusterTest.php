@@ -20,4 +20,25 @@ class TmiClusterTest extends TestCase
 
         self::assertCount(2, $supervisor->processes());
     }
+
+    public function testSupervisorProcess(): void
+    {
+        /** @var Supervisor $supervisor */
+        $supervisor = app(SupervisorRepository::class)->create([]);
+
+        $supervisor->handleOutputUsing(function ($level, $line) {
+            fwrite(STDERR, print_r($line, TRUE));
+        });
+
+        self::assertStringStartsWith(gethostname(), $supervisor->model->name);
+
+        $supervisor->scale(2);
+        $supervisor->loop();
+
+        sleep(1);
+
+        print 'test';
+
+        self::assertCount(2, $supervisor->processes());
+    }
 }

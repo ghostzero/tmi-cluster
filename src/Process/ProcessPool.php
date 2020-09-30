@@ -111,7 +111,7 @@ class ProcessPool implements Countable
     protected function start(): self
     {
         $this->processes[] = $this->createProcess()->handleOutputUsing(function ($type, $line) {
-            call_user_func($this->output, $type, $line);
+            call_user_func($this->output, $type, '4'. $line);
         });
 
         return $this;

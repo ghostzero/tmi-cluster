@@ -38,6 +38,7 @@ class RedisCommandQueue implements CommandQueue
         $this->connection()->rpush('commands:'.$name, json_encode([
             'command' => $command,
             'options' => $options,
+            'time' => microtime(),
         ], JSON_THROW_ON_ERROR));
     }
 

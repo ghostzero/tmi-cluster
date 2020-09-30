@@ -2,8 +2,8 @@
 
 namespace GhostZero\TmiCluster\Commands;
 
-use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
+use GhostZero\TmiCluster\TmiClusterClient;
 use Illuminate\Console\Command;
 
 class TmiClusterProcessCommand extends Command
@@ -34,8 +34,7 @@ class TmiClusterProcessCommand extends Command
      */
     public function handle(): int
     {
-        return app(ClusterClient::class)
-            ->connect($this->clusterClientOptions());
+        return TmiClusterClient::connect($this->clusterClientOptions());
     }
 
     /**
@@ -47,7 +46,7 @@ class TmiClusterProcessCommand extends Command
     {
         return new ClusterClientOptions(
             $this->argument('uuid'),
-            $this->option('supervisor'),
+            $this->option('supervisor') ?? 'main',
             $this->option('stop-when-empty'),
             $this->option('memory'),
             $this->option('force')

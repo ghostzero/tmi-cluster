@@ -9,7 +9,9 @@ use GhostZero\Tmi\Tags;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
-use GhostZero\TmiCluster\Jobs\PeriodicTimerCalled;
+use GhostZero\TmiCluster\Events\IrcCommandEvent;
+use GhostZero\TmiCluster\Events\MessageEvent;
+use Illuminate\Support\Str;
 
 class TmiClusterClient implements ClusterClient
 {
@@ -19,7 +21,7 @@ class TmiClusterClient implements ClusterClient
 
     private CommandQueue $commandQueue;
 
-    public function __construct(ClusterClientOptions $options)
+    private function __construct(ClusterClientOptions $options)
     {
         $this->options = $options;
         $this->commandQueue = app(CommandQueue::class);
@@ -29,7 +31,7 @@ class TmiClusterClient implements ClusterClient
         $this->registerEvents();
     }
 
-    public function connect(ClusterClientOptions $options): int
+    public static function connect(ClusterClientOptions $options): int
     {
         $instance = new self($options);
         $instance->client->connect();
@@ -40,15 +42,15 @@ class TmiClusterClient implements ClusterClient
     private function registerPeriodicTimer(): void
     {
         $this->client->getLoop()->addPeriodicTimer(2, function () {
-            foreach ($this->commandQueue->pending($this->getQueueName('input')) as $command) {
+            $commands = $this->commandQueue->pending($this->getQueueName('input'));
+            $commands = array_merge($commands, $this->commandQueue->pending('*'));
+            foreach ($commands as $command) {
                 if ($command->command === 'tmi:write') {
                     $this->client->write($command->options['raw_command']);
                 }
             }
 
-            PeriodicTimerCalled::dispatch()
-                ->onQueue('tmi-cluster')
-                ->onConnection(config('tmi-cluster.connection'));
+            event(new PeriodicTimerCalled());
         });
     }
 
@@ -58,47 +60,27 @@ class TmiClusterClient implements ClusterClient
             ->on('message', function (Channel $channel, Tags $tags, string $user, string $message, bool $self) {
                 if ($self) return;
 
-                $this->queueEvent('message', func_get_args());
+                if (Str::startsWith($message, ['!', '.'])) {
+                    event(new CommandEvent($channel, $tags, $user, $message));
+                } else {
+                    event(new MessageEvent($channel, $tags, $user, $message));
+                }
             })
-            ->on('cheer', function () {
-                $this->queueEvent('cheer', func_get_args());
-            })
-            ->on('hosting', function () {
-                $this->queueEvent('hosting', func_get_args());
-            })
-            ->on('hosted', function () {
-                $this->queueEvent('hosted', func_get_args());
-            })
-            ->on('raided', function () {
-                $this->queueEvent('raided', func_get_args());
-            })
-            ->on('subscription', function () {
-                $this->queueEvent('subscription', func_get_args());
-            })
-            ->on('submysterygift', function () {
-                $this->queueEvent('submysterygift', func_get_args());
-            })
-            ->on('resub', function () {
-                $this->queueEvent('resub', func_get_args());
-            })
-            ->on('subgift', function () {
-                $this->queueEvent('subgift', func_get_args());
-            })
-            ->on('giftpaidupgrade', function () {
-                $this->queueEvent('giftpaidupgrade', func_get_args());
-            })
-            ->on('anongiftpaidupgrade', function () {
-                $this->queueEvent('anongiftpaidupgrade', func_get_args());
-            });
+            // forward all irc commands as new IrcCommandEvent
+            ->on('cheer', fn() => event(new IrcCommandEvent('cheer', func_get_args())))
+            ->on('hosting', fn() => event(new IrcCommandEvent('hosting', func_get_args())))
+            ->on('hosted', fn() => event(new IrcCommandEvent('hosted', func_get_args())))
+            ->on('raided', fn() => event(new IrcCommandEvent('raided', func_get_args())))
+            ->on('subscription', fn() => event(new IrcCommandEvent('subscription', func_get_args())))
+            ->on('submysterygift', fn() => event(new IrcCommandEvent('submysterygift', func_get_args())))
+            ->on('resub', fn() => event(new IrcCommandEvent('resub', func_get_args())))
+            ->on('subgift', fn() => event(new IrcCommandEvent('subgift', func_get_args())))
+            ->on('giftpaidupgrade', fn() => event(new IrcCommandEvent('giftpaidupgrade', func_get_args())))
+            ->on('anongiftpaidupgrade', fn() => event(new IrcCommandEvent('anongiftpaidupgrade', func_get_args())));
     }
 
     private function getQueueName(string $string): string
     {
         return $this->options->getUuid() . '-' . $string;
-    }
-
-    private function queueEvent(string $string, array $payload): void
-    {
-        $this->commandQueue->push($this->getQueueName('output'), $string, $payload);
     }
 }
