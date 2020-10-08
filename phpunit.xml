@@ -9,8 +9,6 @@
         <env name="APP_ENV" value="testing"/>
         <env name="APP_KEY" value="AckfSECXIvnK5r28GVIWUAxmbBSjTsmF"/>
         <env name="REDIS_CLIENT" value="predis"/>
-        <env name="TMI_IDENTITY_USERNAME" value="ghostzero"/>
-        <env name="TMI_IDENTITY_PASSWORD" value="oauth:8hbt9lbeaod36l1fxprflfly7gkhp7"/>
     </php>
     <testsuites>
         <testsuite name="Library Program Test Suite">
