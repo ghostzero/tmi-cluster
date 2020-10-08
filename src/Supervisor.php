@@ -79,6 +79,11 @@ class Supervisor
                 $this->pools()->each(fn(ProcessPool $x) => $x->monitor());
             }
 
+            // Update all model data here
+            $this->model->forceFill([
+                'last_ping_at' => now(),
+            ]);
+
             // Next, we'll persist the supervisor state to storage so that it can be read by a
             // user interface. This contains information on the specific options for it and
             // the current number of worker processes per queue for easy load monitoring.
@@ -106,12 +111,12 @@ class Supervisor
     {
         return new ProcessPool($options, function ($type, $line) {
             $this->output('3'.$type, $line);
-        });
+        }, $this);
     }
 
     public function output($type, $line): void
     {
-        call_user_func($this->output, $type, '2'.$line);
+        call_user_func($this->output, $type, $line);
     }
 
     private function pools(): Collection

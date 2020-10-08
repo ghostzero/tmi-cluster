@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster;
 
+use Closure;
 use GhostZero\Tmi\Channel;
 use GhostZero\Tmi\Client;
 use GhostZero\Tmi\ClientOptions;
@@ -10,8 +11,8 @@ use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Events\IrcCommandEvent;
-use GhostZero\TmiCluster\Events\MessageEvent;
-use Illuminate\Support\Str;
+use GhostZero\TmiCluster\Events\IrcMessageEvent;
+use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 
 class TmiClusterClient implements ClusterClient
 {
@@ -21,22 +22,31 @@ class TmiClusterClient implements ClusterClient
 
     private CommandQueue $commandQueue;
 
+    private Closure $output;
+
     private function __construct(ClusterClientOptions $options)
     {
         $this->options = $options;
         $this->commandQueue = app(CommandQueue::class);
         $this->client = new Client(new ClientOptions(config('tmi-cluster.tmi')));
+        $this->output = function () {
+            //
+        };
 
         $this->registerPeriodicTimer();
         $this->registerEvents();
     }
 
-    public static function connect(ClusterClientOptions $options): int
+    public static function make(ClusterClientOptions $options): self
     {
-        $instance = new self($options);
-        $instance->client->connect();
+        return new self($options);
+    }
 
-        return 0; // process return code
+    public function handleOutputUsing(Closure $output): self
+    {
+        $this->output = $output;
+
+        return $this;
     }
 
     private function registerPeriodicTimer(): void
@@ -46,7 +56,12 @@ class TmiClusterClient implements ClusterClient
             $commands = array_merge($commands, $this->commandQueue->pending('*'));
             foreach ($commands as $command) {
                 if ($command->command === 'tmi:write') {
-                    $this->client->write($command->options['raw_command']);
+                    call_user_func($this->output, null, $command->options->raw_command);
+                    $this->client->write($command->options->raw_command);
+                } elseif ($command->command === 'tmi:join') {
+                    $this->client->join($command->options->channel);
+                } elseif ($command->command === 'tmi:part') {
+                    $this->client->join($command->options->channel);
                 }
             }
 
@@ -60,11 +75,7 @@ class TmiClusterClient implements ClusterClient
             ->on('message', function (Channel $channel, Tags $tags, string $user, string $message, bool $self) {
                 if ($self) return;
 
-                if (Str::startsWith($message, ['!', '.'])) {
-                    event(new CommandEvent($channel, $tags, $user, $message));
-                } else {
-                    event(new MessageEvent($channel, $tags, $user, $message));
-                }
+                event(new IrcMessageEvent($channel, $tags, $user, $message));
             })
             // forward all irc commands as new IrcCommandEvent
             ->on('cheer', fn() => event(new IrcCommandEvent('cheer', func_get_args())))
@@ -82,5 +93,10 @@ class TmiClusterClient implements ClusterClient
     private function getQueueName(string $string): string
     {
         return $this->options->getUuid() . '-' . $string;
+    }
+
+    public function connect(): void
+    {
+        $this->client->connect();
     }
 }

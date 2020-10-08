@@ -3,9 +3,7 @@
 namespace GhostZero\TmiCluster\Providers;
 
 use GhostZero\TmiCluster\Commands;
-use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\ServiceBindings;
-use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\TmiCluster;
 use Illuminate\Support\ServiceProvider;
 
@@ -61,6 +59,8 @@ class TmiClusterServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 Commands\TmiClusterCommand::class,
+                Commands\TmiClusterListCommand::class,
+                Commands\TmiClusterJoinCommand::class,
                 Commands\TmiClusterProcessCommand::class,
             ]);
         }

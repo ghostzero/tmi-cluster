@@ -5,6 +5,8 @@ namespace GhostZero\TmiCluster\Process;
 use Carbon\CarbonImmutable;
 use Closure;
 use Countable;
+use GhostZero\TmiCluster\Models\SupervisorProcess;
+use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -16,11 +18,16 @@ class ProcessPool implements Countable
     private array $terminatingProcesses = [];
     private ProcessOptions $options;
     private Closure $output;
+    /**
+     * @var Supervisor
+     */
+    private Supervisor $supervisor;
 
-    public function __construct(ProcessOptions $options, Closure $output)
+    public function __construct(ProcessOptions $options, Closure $output, Supervisor $supervisor)
     {
         $this->options = $options;
         $this->output = $output;
+        $this->supervisor = $supervisor;
     }
 
     public function count(): int
@@ -111,7 +118,7 @@ class ProcessPool implements Countable
     protected function start(): self
     {
         $this->processes[] = $this->createProcess()->handleOutputUsing(function ($type, $line) {
-            call_user_func($this->output, $type, '4'. $line);
+            call_user_func($this->output, $type, $line);
         });
 
         return $this;
@@ -119,11 +126,16 @@ class ProcessPool implements Countable
 
     protected function createProcess(): Process
     {
-        Log::info($this->options->toWorkerCommand($uuid = Str::uuid()));
+        $model = SupervisorProcess::query()->forceCreate([
+            'id' => Str::uuid(),
+            'supervisor_id' => $this->supervisor->model->getKey(),
+            'state' => 'initialize',
+            'channels' => [],
+        ]);
 
         return new Process(SystemProcess::fromShellCommandline(
-            $this->options->toWorkerCommand($uuid), $this->options->getWorkingDirectory()
-        )->setTimeout(null)->disableOutput());
+            $this->options->toWorkerCommand($model->getKey()), $this->options->getWorkingDirectory()
+        )->setTimeout(null)->disableOutput(), $model);
     }
 
     public function restart(): void

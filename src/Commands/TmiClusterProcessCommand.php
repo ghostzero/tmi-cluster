@@ -34,7 +34,13 @@ class TmiClusterProcessCommand extends Command
      */
     public function handle(): int
     {
-        return TmiClusterClient::connect($this->clusterClientOptions());
+        TmiClusterClient::make($this->clusterClientOptions())
+            ->handleOutputUsing(function($type, $line) {
+                $this->info($line);
+            })
+            ->connect();
+
+        return 0;
     }
 
     /**
@@ -46,7 +52,7 @@ class TmiClusterProcessCommand extends Command
     {
         return new ClusterClientOptions(
             $this->argument('uuid'),
-            $this->option('supervisor') ?? 'main',
+            $this->option('supervisor'),
             $this->option('stop-when-empty'),
             $this->option('memory'),
             $this->option('force')

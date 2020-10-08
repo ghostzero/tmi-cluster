@@ -2,13 +2,16 @@
 
 namespace GhostZero\TmiCluster\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property mixed name
  * @property mixed options
  * @property bool is_stale
+ * @property CarbonInterface last_ping_at
  */
 class Supervisor extends Model
 {
@@ -16,12 +19,21 @@ class Supervisor extends Model
 
     protected $guarded = [];
 
+    protected $dates = [
+        'last_ping_at',
+    ];
+
     protected $casts = [
         'options' => 'array',
     ];
 
     public function getIsStaleAttribute(): bool
     {
-        return false;
+        return $this->last_ping_at->diffInMinutes(now()) > 2;
+    }
+
+    public function processes(): HasMany
+    {
+        return $this->hasMany(SupervisorProcess::class);
     }
 }

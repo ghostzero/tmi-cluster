@@ -17,6 +17,7 @@ class CreateSupervisorsTable extends Migration
             $table->id();
             $table->string('name');
             $table->json('options');
+            $table->timestamp('last_ping_at');
             $table->timestamps();
             $table->softDeletes();
         });

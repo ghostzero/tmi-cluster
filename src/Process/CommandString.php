@@ -6,7 +6,7 @@ use GhostZero\TmiCluster\PhpBinary;
 
 class CommandString
 {
-    public static string $command = 'exec @php artisan tmi-cluster:process';
+    public static string $command = '@php artisan tmi-cluster:process';
 
     public static function fromOptions(ProcessOptions $options, string $uuid): string
     {

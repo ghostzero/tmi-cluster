@@ -1,4 +1,5 @@
 {
+  "version": "1.1.0",
   "name": "ghostzero/tmi-cluster",
   "description": "Laravel package to create a tmi cluster.",
   "type": "library",
@@ -25,7 +26,8 @@
     "illuminate/support": "^8.1",
     "illuminate/console": "^8.1",
     "predis/predis": "^1.1",
-    "ext-json": "*"
+    "ext-json": "*",
+    "ext-pcntl": "*"
   },
   "require-dev": {
     "orchestra/testbench": "^6.0",

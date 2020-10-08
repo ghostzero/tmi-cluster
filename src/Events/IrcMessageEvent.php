@@ -5,7 +5,7 @@ namespace GhostZero\TmiCluster\Events;
 use GhostZero\Tmi\Channel;
 use GhostZero\Tmi\Tags;
 
-class MessageEvent
+class IrcMessageEvent
 {
     public Channel $channel;
     public Tags $tags;

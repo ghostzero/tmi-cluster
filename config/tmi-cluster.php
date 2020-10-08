@@ -50,6 +50,6 @@ return [
             'username' => env('TMI_IDENTITY_USERNAME'),
             'password' => env('TMI_IDENTITY_PASSWORD'),
         ],
-        'channels' => ['ghostzero', 'twitchcologne']
+        'channels' => []
     ],
 ];

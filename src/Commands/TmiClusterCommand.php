@@ -21,17 +21,7 @@ class TmiClusterCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    protected $description = 'Starts a new tmi cluster supervisor.';
 
     /**
      * Execute the console command.
@@ -51,7 +41,7 @@ class TmiClusterCommand extends Command
             return 13;
         }
 
-        $this->info('Kitsune started successfully!');
+        $this->info('TMI Cluster started successfully!');
 
         return $this->start($supervisor);
     }

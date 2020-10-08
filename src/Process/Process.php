@@ -29,22 +29,19 @@ class Process
             return;
         }
 
-        call_user_func($this->output, null);
-
         $this->restart();
     }
 
-    protected function restart()
+    protected function restart(): void
     {
         if ($this->systemProcess->isStarted()) {
             event(new WorkerProcessRestarting($this));
-            call_user_func($this->output, null, 'WorkerProcessRestarting');
         }
 
         $this->start($this->output);
     }
 
-    public function terminate()
+    public function terminate(): void
     {
         $this->sendSignal(SIGTERM);
     }
@@ -67,7 +64,7 @@ class Process
         }
     }
 
-    public function start(Closure $output)
+    public function start(Closure $output): Process
     {
         $this->handleOutputUsing($output)->cooldown();
 
@@ -88,7 +85,6 @@ class Process
                 : null;
 
             if (! $this->systemProcess->isRunning()) {
-                call_user_func($this->output, null, 'UnableToLaunchProcess');
                 event(new UnableToLaunchProcess($this));
             }
         } else {

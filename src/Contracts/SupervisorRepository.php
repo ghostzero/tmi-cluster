@@ -5,7 +5,7 @@ namespace GhostZero\TmiCluster\Contracts;
 use Exception;
 use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Models;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 
 interface SupervisorRepository
 {
@@ -23,7 +23,7 @@ interface SupervisorRepository
      * @param string[] $columns
      * @return Models\Supervisor[]|Collection
      */
-    public function all($columns = ['*']): array;
+    public function all($columns = ['*']): Collection;
 
     /**
      * Flush all stale supervisors from database.

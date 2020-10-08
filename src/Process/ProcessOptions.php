@@ -20,7 +20,7 @@ class ProcessOptions
 
     public function getWorkingDirectory(): string
     {
-        return __DIR__;
+        return app_path('..');
     }
 
     public function getSupervisor(): string

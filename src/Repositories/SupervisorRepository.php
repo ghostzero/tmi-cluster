@@ -6,6 +6,7 @@ use Exception;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository as Repository;
 use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\Supervisor;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,7 @@ class SupervisorRepository implements Repository
         /** @var Models\Supervisor $supervisor */
         $supervisor = Models\Supervisor::query()->create(array_merge([
             'name' => sprintf('%s-%s', gethostname(), Str::random(4)),
+            'last_ping_at' => now(),
             'options' => [
                 'nice' => 0,
             ]
@@ -30,9 +32,9 @@ class SupervisorRepository implements Repository
     /**
      * @inheritDoc
      */
-    public function all($columns = ['*']): array
+    public function all($columns = ['*']): Collection
     {
-        return Models\Supervisor::all($columns);
+        return Models\Supervisor::all($columns)->collect();
     }
 
     /**
