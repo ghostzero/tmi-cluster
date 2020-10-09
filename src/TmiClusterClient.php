@@ -13,9 +13,15 @@ use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Events\IrcCommandEvent;
 use GhostZero\TmiCluster\Events\IrcMessageEvent;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
+use GhostZero\TmiCluster\Models\SupervisorProcess;
 
 class TmiClusterClient implements ClusterClient
 {
+    /**
+     * @var SupervisorProcess
+     */
+    private $model;
+
     private Client $client;
 
     private ClusterClientOptions $options;
@@ -26,6 +32,7 @@ class TmiClusterClient implements ClusterClient
 
     private function __construct(ClusterClientOptions $options)
     {
+        $this->model = SupervisorProcess::query()->whereKey($options->getUuid())->firstOrFail();
         $this->options = $options;
         $this->commandQueue = app(CommandQueue::class);
         $this->client = new Client(new ClientOptions(config('tmi-cluster.tmi')));
@@ -55,15 +62,32 @@ class TmiClusterClient implements ClusterClient
             $commands = $this->commandQueue->pending($this->getQueueName('input'));
             $commands = array_merge($commands, $this->commandQueue->pending('*'));
             foreach ($commands as $command) {
-                if ($command->command === 'tmi:write') {
-                    call_user_func($this->output, null, $command->options->raw_command);
-                    $this->client->write($command->options->raw_command);
-                } elseif ($command->command === 'tmi:join') {
-                    $this->client->join($command->options->channel);
-                } elseif ($command->command === 'tmi:part') {
-                    $this->client->join($command->options->channel);
+                switch ($command->command) {
+                    case CommandQueue::COMMAND_TMI_WRITE:
+                        call_user_func($this->output, null, $command->options->raw_command);
+                        $this->client->write($command->options->raw_command);
+                        break;
+                    case CommandQueue::COMMAND_TMI_JOIN:
+                        $this->client->join($command->options->channel);
+                        break;
+                    case CommandQueue::COMMAND_TMI_PART:
+                        $this->client->part($command->options->channel);
+                        break;
+                    case CommandQueue::COMMAND_CLIENT_EXIT:
+                        exit(0);
+                    default:
+                        call_user_func($this->output, null, sprintf('Command %s not supported', $command->command));
                 }
             }
+
+            // update tmi cluster state
+            $this->model->forceFill([
+                'state' => $this->client->isConnected()
+                    ? SupervisorProcess::STATE_CONNECTED
+                    : SupervisorProcess::STATE_DISCONNECTED,
+                'channels' => array_keys($this->client->getChannels()),
+                'last_ping_at' => now(),
+            ])->save();
 
             event(new PeriodicTimerCalled());
         });

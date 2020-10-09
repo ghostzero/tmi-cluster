@@ -41,7 +41,7 @@ class TmiClusterCommand extends Command
             return 13;
         }
 
-        $this->info('TMI Cluster started successfully!');
+        $this->info("Supervisor {$supervisor->model->name} started successfully!");
 
         return $this->start($supervisor);
     }
@@ -53,10 +53,10 @@ class TmiClusterCommand extends Command
         }
 
         $supervisor->handleOutputUsing(function ($type, $line) {
-            $this->output->write($line);
+            $this->info($line);
         });
 
-        $supervisor->scale(3);
+        $supervisor->scale(config('tmi-cluster.auto_scale.processes.min'));
 
         $supervisor->monitor();
 

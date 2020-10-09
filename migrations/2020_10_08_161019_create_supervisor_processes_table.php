@@ -18,6 +18,7 @@ class CreateSupervisorProcessesTable extends Migration
             $table->unsignedBigInteger('supervisor_id')->nullable();
             $table->string('state');
             $table->json('channels');
+            $table->timestamp('last_ping_at');
             $table->timestamps();
         });
     }

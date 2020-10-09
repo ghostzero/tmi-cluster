@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Commands;
 
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use GhostZero\TmiCluster\Models\Supervisor;
+use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Console\Command;
 
 class TmiClusterListCommand extends Command
@@ -32,8 +33,6 @@ class TmiClusterListCommand extends Command
         /** @var SupervisorRepository $repository */
         $repository = app(SupervisorRepository::class);
 
-        $repository->flushStale();
-
         $supervisors = $repository->all()
             ->map(function (Supervisor $supervisor) {
                 return [
@@ -44,9 +43,25 @@ class TmiClusterListCommand extends Command
                 ];
             });
 
-        $headers = ['ID', 'Name', 'Last Ping', 'Processes'];
+        $this->table([
+            'ID', 'Name', 'Last Ping', 'Processes'
+        ], $supervisors);
 
-        $this->table($headers, $supervisors);
+
+        $processes = SupervisorProcess::all()
+            ->map(function (SupervisorProcess $row) {
+                return [
+                    $row->getKey(),
+                    $row->supervisor->name,
+                    $row->state,
+                    $row->last_ping_at ? $row->last_ping_at->diffInSeconds() : 'N/A',
+                    count($row->channels),
+                ];
+            });
+
+        $this->table([
+            'ID', 'Supervisor', 'State', 'Last Ping', 'Channels'
+        ], $processes);
 
         return 0;
     }

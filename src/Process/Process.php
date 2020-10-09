@@ -12,15 +12,22 @@ use Symfony\Component\Process\Process as SystemProcess;
 class Process
 {
     private SystemProcess $systemProcess;
+    private string $uuid;
     private Closure $output;
     private ?CarbonImmutable $restartAgainAt = null;
 
-    public function __construct(SystemProcess $systemProcess)
+    public function __construct(SystemProcess $systemProcess, string $uuid)
     {
         $this->systemProcess = $systemProcess;
+        $this->uuid = $uuid;
         $this->output = function () {
             //
         };
+    }
+
+    public function getUuid(): string
+    {
+        return $this->uuid;
     }
 
     public function monitor(): void
@@ -38,12 +45,17 @@ class Process
             event(new WorkerProcessRestarting($this));
         }
 
-        $this->start($this->output);
+        $this->start();
     }
 
     public function terminate(): void
     {
-        $this->sendSignal(SIGTERM);
+        if(defined('SIGTERM')) {
+            $this->sendSignal(SIGTERM);
+        } else {
+            call_user_func($this->output, null, 'Sigterm is not supported. Using stop() instead.');
+            $this->systemProcess->stop();
+        }
     }
 
     public function stop(): void
@@ -64,11 +76,11 @@ class Process
         }
     }
 
-    public function start(Closure $output): Process
+    public function start(): Process
     {
-        $this->handleOutputUsing($output)->cooldown();
+        $this->cooldown();
 
-        $this->systemProcess->start($output);
+        $this->systemProcess->start($this->output);
 
         return $this;
     }

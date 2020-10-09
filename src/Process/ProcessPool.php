@@ -47,7 +47,7 @@ class ProcessPool implements Countable
 
     public function scale($processes): void
     {
-        $processes = max(0, (int) $processes);
+        $processes = max(0, (int)$processes);
 
         if ($processes === count($this->processes)) {
             return;
@@ -105,7 +105,7 @@ class ProcessPool implements Countable
     /**
      * Remove the given number of processes from the process array.
      *
-     * @param  int  $count
+     * @param int $count
      * @return void
      */
     protected function removeProcesses($count)
@@ -117,9 +117,13 @@ class ProcessPool implements Countable
 
     protected function start(): self
     {
-        $this->processes[] = $this->createProcess()->handleOutputUsing(function ($type, $line) {
-            call_user_func($this->output, $type, $line);
+        $process = $this->createProcess();
+
+        $process->handleOutputUsing(function ($type, $line) use($process) {
+            call_user_func($this->output, $type, $process->getUuid() . ' | ' . $line);
         });
+
+        $this->processes[] = $process;
 
         return $this;
     }
@@ -131,11 +135,12 @@ class ProcessPool implements Countable
             'supervisor_id' => $this->supervisor->model->getKey(),
             'state' => 'initialize',
             'channels' => [],
+            'last_ping_at' => now(),
         ]);
 
         return new Process(SystemProcess::fromShellCommandline(
             $this->options->toWorkerCommand($model->getKey()), $this->options->getWorkingDirectory()
-        )->setTimeout(null)->disableOutput(), $model);
+        )->setTimeout(null)->disableOutput(), $model->getKey());
     }
 
     public function restart(): void

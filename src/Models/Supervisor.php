@@ -29,7 +29,7 @@ class Supervisor extends Model
 
     public function getIsStaleAttribute(): bool
     {
-        return $this->last_ping_at->diffInMinutes(now()) > 2;
+        return $this->last_ping_at->diffInSeconds() >= 30;
     }
 
     public function processes(): HasMany

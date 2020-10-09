@@ -5,6 +5,32 @@ namespace GhostZero\TmiCluster\Contracts;
 interface CommandQueue
 {
     /**
+     * Sends a raw irc command. Avoid this for join/part commands.
+     *
+     * Payload: [raw_command => #example]
+     */
+    public const COMMAND_TMI_WRITE = 'tmi:write';
+
+    /**
+     * Joins a irc channel.
+     *
+     * Payload: [channel => #example]
+     */
+    public const COMMAND_TMI_JOIN = 'tmi:join';
+
+    /**
+     * Leaves a irc channel.
+     *
+     * Payload: [channel => #example]
+     */
+    public const COMMAND_TMI_PART = 'tmi:part';
+
+    /**
+     * Executes a exit(0) within the tmi cluster process.
+     */
+    public const COMMAND_CLIENT_EXIT = 'client:exit';
+
+    /**
      * Push a command onto a queue.
      *
      * @param  string  $name

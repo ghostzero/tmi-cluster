@@ -110,7 +110,7 @@ class Supervisor
     private function createSingleProcessPool(ProcessOptions $options): ProcessPool
     {
         return new ProcessPool($options, function ($type, $line) {
-            $this->output('3'.$type, $line);
+            $this->output($type, $line);
         }, $this);
     }
 

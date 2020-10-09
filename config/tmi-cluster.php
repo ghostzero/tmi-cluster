@@ -52,4 +52,27 @@ return [
         ],
         'channels' => []
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Auto Scaling Thresholds
+    |--------------------------------------------------------------------------
+    |
+    | Here you can specify all auto scaling thresholds. Depending on the size
+    | of your cluster it is recommended to adjust the thresholds. For more
+    | information consult our documentation.
+    |
+    */
+
+    'auto_scale' => [
+        'processes' => [
+            'min' => 2,
+            'max' => 25
+        ],
+        'thresholds' => [
+            'channels' => 50,
+            'scale_in' => 50,
+            'scale_out' => 70,
+        ],
+    ]
 ];
