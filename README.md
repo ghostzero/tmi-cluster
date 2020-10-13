@@ -1,5 +1,11 @@
 # TMI Cluster for Laravel
 
+> **Project Status**: This project is still in an early stage. Please do not put this software into production yet, as the APIs are subject to change. Everyone is welcome to contribute to this project.
+
+<p align="center">
+  <img height="400" src="https://fa-cdn.bitinflow.com/images/chrome_2020-10-12_17-53-36.png">
+</p>
+
 ## Introduction
 
 TMI Cluster is a Laravel package that smoothly enables a highly scalable IRC client cluster for Twitch. TMI Cluster consists of multiple supervisors that can be deployed on multiple hosts. The core is inspired by [Horizon](https://github.com/laravel/horizon), which handles the complex IRC process management.
