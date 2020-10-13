@@ -16,6 +16,7 @@ class TmiClusterServiceProvider extends ServiceProvider
         $this->configure();
         $this->registerServices();
         $this->registerCommands();
+        $this->registerFrontend();
     }
 
     /**
@@ -65,5 +66,10 @@ class TmiClusterServiceProvider extends ServiceProvider
                 Commands\TmiClusterPurgeCommand::class,
             ]);
         }
+    }
+
+    private function registerFrontend(): void
+    {
+        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'tmi-cluster');
     }
 }

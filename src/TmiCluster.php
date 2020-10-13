@@ -5,6 +5,7 @@ namespace GhostZero\TmiCluster;
 use Exception;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
+use Illuminate\Support\Facades\Route;
 
 class TmiCluster
 {
@@ -47,5 +48,16 @@ class TmiCluster
 
             $commandQueue->push($nextServer['name'], CommandQueue::COMMAND_TMI_JOIN, ['channel' => $channel]);
         }
+    }
+
+    public static function routes(): void
+    {
+        Route::middleware('web')
+            ->prefix('tmi-cluster')
+            ->namespace('GhostZero\\TmiCluster\\Http\\Controllers')
+            ->group(function () {
+                Route::get('', 'DashboardController@index');
+                Route::get('statistics', 'DashboardController@statistics');
+            });
     }
 }

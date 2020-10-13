@@ -5,6 +5,7 @@ namespace GhostZero\TmiCluster;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Cache\RedisLock;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Redis\Factory;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Collection;
@@ -60,7 +61,7 @@ class AutoScale
                 }
             }
 
-            $this->releaseStaleSupervisors();
+            $this->releaseStaleSupervisors($supervisor);
         } catch (Throwable $exception) {
             $supervisor->output(null, $exception->getMessage());
         }
@@ -81,11 +82,20 @@ class AutoScale
         return new RedisLock($this->connection(), $name, $seconds, $owner);
     }
 
-    private function releaseStaleSupervisors(): void
+    private function releaseStaleSupervisors(Supervisor $supervisor): void
     {
-        $this->lock('release-stale-supervisors-2')->get(function () {
-            // app(SupervisorRepository::class)->flushStale();
-        });
+        if ($this->counter % 10 !== 0) return;
+        $lock = $this->lock('release-stale-supervisors', 10);
+
+        try {
+            $lock->block(5);
+            // Lock acquired after waiting maximum of 5 seconds...
+            app(SupervisorRepository::class)->flushStale();
+        } catch (LockTimeoutException $e) {
+            $supervisor->output(null, 'Unable to acquire lock...');
+        } finally {
+            optional($lock)->release();
+        }
     }
 
     private function shouldScaleOut(float $usage): bool
