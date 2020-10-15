@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster;
 
 use Closure;
 use DomainException;
+use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
 use GhostZero\TmiCluster\Process\ProcessOptions;
 use GhostZero\TmiCluster\Process\ProcessPool;
@@ -69,6 +70,7 @@ class Supervisor
     {
         try {
             // todo process pending commands
+            $this->processPendingCommands();
 
             // If the supervisor is working, we will perform any needed scaling operations and
             // monitor all of these underlying worker processes to make sure they are still
@@ -127,5 +129,28 @@ class Supervisor
     public function processes(): Collection
     {
         return $this->pools()->map(fn(ProcessPool $x) => $x->processes())->collapse();
+    }
+
+    private function processPendingCommands(): void
+    {
+        /** @var CommandQueue $commandQueue */
+        $commandQueue = app(CommandQueue::class);
+        $commands = $commandQueue->pending($this->model->getKey());
+
+        foreach ($commands as $command) {
+            switch ($command->command) {
+                case CommandQueue::COMMAND_TMI_JOIN:
+                    $this->handleJoin($command->options->channel);
+                    break;
+            }
+        }
+    }
+
+    private function handleJoin($channel): void
+    {
+        // todo implement irc join
+        // if processes full force join
+        // if some space available, join
+        // if no space available, spin up, re-queue channel
     }
 }

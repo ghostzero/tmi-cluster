@@ -6,6 +6,7 @@ use Exception;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 
 class TmiCluster
 {
@@ -19,7 +20,7 @@ class TmiCluster
     public static function use(string $connection): void
     {
         if (is_null($config = config("database.redis.{$connection}"))) {
-            throw new Exception("Redis connection [{$connection}] has not been configured.");
+            throw new RuntimeException("Redis connection [{$connection}] has not been configured.");
         }
 
         config(['database.redis.tmi-cluster' => array_merge($config, [
@@ -31,22 +32,24 @@ class TmiCluster
     {
         $commandQueue = app(CommandQueue::class);
 
-        $servers = SupervisorProcess::query()
+        $supervisor = Models\Supervisor::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(10))
-            ->get()->map(function (SupervisorProcess $process) {
+            ->get()->map(function (Models\Supervisor $supervisor) {
                 return [
-                    'name' => "{$process->getKey()}-input",
-                    'channels' => count($process->channels),
+                    'name' => $supervisor->getKey(),
+                    'channels' => $supervisor->processes->sum(function (SupervisorProcess $process) {
+                        return count($process->channels);
+                    }),
                 ];
             })->sortBy('channels');
 
         foreach ($channels as $channel) {
-            $servers = $servers->sortBy('channels');
-            $nextServer = $servers->shift();
-            $nextServer['channels'] += 1;
-            $servers->push($nextServer);
+            $supervisor = $supervisor->sortBy('channels');
+            $nextSupervisor = $supervisor->shift();
+            $nextSupervisor['channels'] += 1;
+            $supervisor->push($nextSupervisor);
 
-            $commandQueue->push($nextServer['name'], CommandQueue::COMMAND_TMI_JOIN, ['channel' => $channel]);
+            $commandQueue->push($nextSupervisor['name'], CommandQueue::COMMAND_TMI_JOIN, ['channel' => $channel]);
         }
     }
 

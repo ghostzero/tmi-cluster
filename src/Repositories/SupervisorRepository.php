@@ -42,10 +42,15 @@ class SupervisorRepository implements Repository
      */
     public function flushStale(): void
     {
-        $this->all()->each(function (Models\Supervisor $supervisor) {
+        $channels = [];
+
+        $this->all()->each(function (Models\Supervisor $supervisor) use(&$channels) {
             if ($supervisor->is_stale) {
                 try {
-                    $supervisor->processes()->each(fn($process) => $this->deleteStaleProcess($process));
+                    $supervisor->processes()->each(function($process) use(&$channels) {
+                        $channels = array_merge($channels, $process->channels);
+                        $this->deleteStaleProcess($process);
+                    });
                     $supervisor->delete();
                 } catch (Exception $e) {
                     throw $e;
@@ -54,13 +59,12 @@ class SupervisorRepository implements Repository
                 $supervisor->processes()->each(fn($process) => $this->deleteIfStaleProcess($process));
             }
         });
+
+        TmiCluster::joinNextServer($channels);
     }
 
     private function deleteStaleProcess($process): void
     {
-        // migrate stale channels into a fresh instance
-        TmiCluster::joinNextServer($process->channels);
-
         $process->delete();
     }
 
