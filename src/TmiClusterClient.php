@@ -30,6 +30,16 @@ class TmiClusterClient implements ClusterClient
 
     private Closure $output;
 
+    private const METRIC_IRC_MESSAGES = 'irc_messages';
+    private const METRIC_IRC_COMMANDS = 'irc_commands';
+    private const METRIC_COMMAND_QUEUE_COMMANDS = 'command_queue_commands';
+
+    private array $metrics = [
+        self::METRIC_IRC_MESSAGES => 0,
+        self::METRIC_IRC_COMMANDS => 0,
+        self::METRIC_COMMAND_QUEUE_COMMANDS => 0,
+    ];
+
     private function __construct(ClusterClientOptions $options)
     {
         $this->model = SupervisorProcess::query()->whereKey($options->getUuid())->firstOrFail();
@@ -62,6 +72,7 @@ class TmiClusterClient implements ClusterClient
             $commands = $this->commandQueue->pending($this->getQueueName('input'));
             $commands = array_merge($commands, $this->commandQueue->pending('*'));
             foreach ($commands as $command) {
+                $this->metrics[self::METRIC_COMMAND_QUEUE_COMMANDS]++;
                 switch ($command->command) {
                     case CommandQueue::COMMAND_TMI_WRITE:
                         call_user_func($this->output, null, $command->options->raw_command);
@@ -87,6 +98,7 @@ class TmiClusterClient implements ClusterClient
                     : SupervisorProcess::STATE_DISCONNECTED,
                 'channels' => array_keys($this->client->getChannels()),
                 'last_ping_at' => now(),
+                'metrics' => $this->getMetrics(),
             ])->save();
 
             event(new PeriodicTimerCalled());
@@ -99,19 +111,37 @@ class TmiClusterClient implements ClusterClient
             ->on('message', function (Channel $channel, Tags $tags, string $user, string $message, bool $self) {
                 if ($self) return;
 
-                event(new IrcMessageEvent($channel, $tags, $user, $message));
+                $this->event(new IrcMessageEvent($channel, $tags, $user, $message));
             })
             // forward all irc commands as new IrcCommandEvent
-            ->on('cheer', fn() => event(new IrcCommandEvent('cheer', func_get_args())))
-            ->on('hosting', fn() => event(new IrcCommandEvent('hosting', func_get_args())))
-            ->on('hosted', fn() => event(new IrcCommandEvent('hosted', func_get_args())))
-            ->on('raided', fn() => event(new IrcCommandEvent('raided', func_get_args())))
-            ->on('subscription', fn() => event(new IrcCommandEvent('subscription', func_get_args())))
-            ->on('submysterygift', fn() => event(new IrcCommandEvent('submysterygift', func_get_args())))
-            ->on('resub', fn() => event(new IrcCommandEvent('resub', func_get_args())))
-            ->on('subgift', fn() => event(new IrcCommandEvent('subgift', func_get_args())))
-            ->on('giftpaidupgrade', fn() => event(new IrcCommandEvent('giftpaidupgrade', func_get_args())))
-            ->on('anongiftpaidupgrade', fn() => event(new IrcCommandEvent('anongiftpaidupgrade', func_get_args())));
+            ->on('cheer', fn() => $this->event(new IrcCommandEvent('cheer', func_get_args())))
+            ->on('hosting', fn() => $this->event(new IrcCommandEvent('hosting', func_get_args())))
+            ->on('hosted', fn() => $this->event(new IrcCommandEvent('hosted', func_get_args())))
+            ->on('raided', fn() => $this->event(new IrcCommandEvent('raided', func_get_args())))
+            ->on('subscription', fn() => $this->event(new IrcCommandEvent('subscription', func_get_args())))
+            ->on('submysterygift', fn() => $this->event(new IrcCommandEvent('submysterygift', func_get_args())))
+            ->on('resub', fn() => $this->event(new IrcCommandEvent('resub', func_get_args())))
+            ->on('subgift', fn() => $this->event(new IrcCommandEvent('subgift', func_get_args())))
+            ->on('giftpaidupgrade', fn() => $this->event(new IrcCommandEvent('giftpaidupgrade', func_get_args())))
+            ->on('anongiftpaidupgrade', fn() => $this->event(new IrcCommandEvent('anongiftpaidupgrade', func_get_args())));
+    }
+
+    private function event($event): void
+    {
+        event($event);
+
+        if ($event instanceof IrcMessageEvent) {
+            $this->metrics[self::METRIC_IRC_MESSAGES]++;
+        } elseif ($event instanceof IrcCommandEvent) {
+            $this->metrics[self::METRIC_IRC_COMMANDS]++;
+        }
+    }
+
+    private function getMetrics(): array
+    {
+        return array_merge($this->metrics, [
+            'channels' => count($this->client->getChannels()),
+        ]);
     }
 
     private function getQueueName(string $string): string

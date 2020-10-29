@@ -15,9 +15,10 @@ class CreateSupervisorProcessesTable extends Migration
     {
         Schema::create('supervisor_processes', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->unsignedBigInteger('supervisor_id')->nullable();
+            $table->string('supervisor_id')->nullable();
             $table->string('state');
             $table->json('channels');
+            $table->json('metrics')->nullable();
             $table->timestamp('last_ping_at');
             $table->timestamps();
         });

@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster\Providers;
 
+use Exception;
 use GhostZero\TmiCluster\Commands;
 use GhostZero\TmiCluster\ServiceBindings;
 use GhostZero\TmiCluster\TmiCluster;
@@ -11,7 +12,12 @@ class TmiClusterServiceProvider extends ServiceProvider
 {
     use ServiceBindings;
 
-    public function boot()
+    /**
+     * Boot the TmiCluster service.
+     *
+     * @throws Exception
+     */
+    public function boot(): void
     {
         $this->configure();
         $this->registerServices();
@@ -23,8 +29,9 @@ class TmiClusterServiceProvider extends ServiceProvider
      * Setup the configuration for TmiCluster.
      *
      * @return void
+     * @throws Exception
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/tmi-cluster.php', 'tmi-cluster');
         $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
@@ -41,7 +48,7 @@ class TmiClusterServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function registerServices()
+    protected function registerServices(): void
     {
         foreach ($this->serviceBindings as $key => $value) {
             is_numeric($key)
@@ -55,7 +62,7 @@ class TmiClusterServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function registerCommands()
+    protected function registerCommands(): void
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -68,6 +75,11 @@ class TmiClusterServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Register the TmiCluster frontend.
+     *
+     * @return void
+     */
     private function registerFrontend(): void
     {
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'tmi-cluster');

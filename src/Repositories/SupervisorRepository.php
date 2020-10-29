@@ -19,8 +19,9 @@ class SupervisorRepository implements Repository
     {
         /** @var Models\Supervisor $supervisor */
         $supervisor = Models\Supervisor::query()->create(array_merge([
-            'name' => sprintf('%s-%s', gethostname(), Str::random(4)),
+            'id' => sprintf('%s-%s', gethostname(), Str::random(4)),
             'last_ping_at' => now(),
+            'metrics' => [],
             'options' => [
                 'nice' => 0,
             ]
@@ -44,10 +45,10 @@ class SupervisorRepository implements Repository
     {
         $channels = [];
 
-        $this->all()->each(function (Models\Supervisor $supervisor) use(&$channels) {
+        $this->all()->each(function (Models\Supervisor $supervisor) use (&$channels) {
             if ($supervisor->is_stale) {
                 try {
-                    $supervisor->processes()->each(function($process) use(&$channels) {
+                    $supervisor->processes()->each(function ($process) use (&$channels) {
                         $channels = array_merge($channels, $process->channels);
                         $this->deleteStaleProcess($process);
                     });

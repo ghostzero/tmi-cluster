@@ -1,7 +1,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
-<link rel="preload" as="font" href="http://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2" type="font/woff2"
+<link rel="preload" as="font" href="https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2" type="font/woff2"
       crossorigin="anonymous">
-<link rel="preload" as="font" href="http://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2" type="font/woff2"
+<link rel="preload" as="font" href="https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2" type="font/woff2"
       crossorigin="anonymous">
 <style type="text/css">
     html,
@@ -17,9 +17,9 @@
         /* Read next point */
         unicode-range: U+000-5FF; /* Download only latin glyphs */
         src: local('JetBrains Mono'),
-        url('http://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
-        url('http://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff') format('woff');
-    },
+        url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
+        url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff') format('woff');
+    }
 
     @font-face {
         font-family: 'JetBrains Mono Extra Bold';
@@ -29,8 +29,8 @@
         /* Read next point */
         unicode-range: U+000-5FF; /* Download only latin glyphs */
         src: local('JetBrains Mono Extra Bold'),
-        url('http://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2') format('woff2'),
-        url('http://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff') format('woff');
+        url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2') format('woff2'),
+        url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff') format('woff');
     }
 
     body {

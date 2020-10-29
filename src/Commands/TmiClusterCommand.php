@@ -41,7 +41,7 @@ class TmiClusterCommand extends Command
             return 13;
         }
 
-        $this->info("Supervisor {$supervisor->model->name} started successfully!");
+        $this->info("Supervisor {$supervisor->model->getKey()} started successfully!");
 
         return $this->start($supervisor);
     }

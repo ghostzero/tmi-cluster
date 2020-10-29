@@ -133,7 +133,7 @@ class ProcessPool implements Countable
         $model = SupervisorProcess::query()->forceCreate([
             'id' => Str::uuid(),
             'supervisor_id' => $this->supervisor->model->getKey(),
-            'state' => 'initialize',
+            'state' => SupervisorProcess::STATE_INITIALIZE,
             'channels' => [],
             'last_ping_at' => now(),
         ]);

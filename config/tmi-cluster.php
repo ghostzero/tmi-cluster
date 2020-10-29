@@ -43,7 +43,7 @@ return [
         'options' => ['debug' => false],
         'connection' => [
             'secure' => true,
-            'reconnect' => true,
+            'reconnect' => false,
             'rejoin' => true,
         ],
         'identity' => [

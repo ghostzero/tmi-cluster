@@ -61,6 +61,7 @@ class TmiCluster
             ->group(function () {
                 Route::get('', 'DashboardController@index');
                 Route::get('statistics', 'DashboardController@statistics');
+                Route::get('metrics', 'MetricsController@handle');
             });
     }
 }

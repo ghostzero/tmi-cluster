@@ -84,6 +84,9 @@ class Supervisor
             // Update all model data here
             $this->model->forceFill([
                 'last_ping_at' => now(),
+                'metrics' => [
+                    // todo add some fancy metrics
+                ]
             ]);
 
             // Next, we'll persist the supervisor state to storage so that it can be read by a
@@ -105,7 +108,7 @@ class Supervisor
 
     private function createProcessPools(): array
     {
-        $options = new ProcessOptions($this->model->name, $this->model->options);
+        $options = new ProcessOptions($this->model->getKey(), $this->model->options);
         return [$this->createSingleProcessPool($options)];
     }
 
