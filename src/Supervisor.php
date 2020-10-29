@@ -8,6 +8,7 @@ use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
+use GhostZero\TmiCluster\Process\Process;
 use GhostZero\TmiCluster\Process\ProcessOptions;
 use GhostZero\TmiCluster\Process\ProcessPool;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -66,7 +67,6 @@ class Supervisor implements Pausable, Restartable, Terminable
         try {
             $this->processPendingSignals();
 
-            // todo process pending commands
             $this->processPendingCommands();
 
             // If the supervisor is working, we will perform any needed scaling operations and
@@ -155,14 +155,14 @@ class Supervisor implements Pausable, Restartable, Terminable
         // pools down to zero workers to gracefully terminate them all out here.
         $this->model->forceDelete();
 
-        $this->pools()->each(function ($pool) {
-            $pool->processes()->each(function ($process) {
+        $this->pools()->each(function (ProcessPool $pool) {
+            $pool->processes()->each(function (Process $process) {
                 $process->terminate();
             });
         });
 
         if ($this->shouldWait()) {
-            while ($this->pools()->map->runningProcesses()->collapse()->count()) {
+            while ($this->pools()->map(fn(ProcessPool $x) => $x->runningProcesses())->collapse()->count()) {
                 sleep(1);
             }
         }

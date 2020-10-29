@@ -45,6 +45,13 @@ class ProcessPool implements Countable
         return new Collection($this->processes);
     }
 
+    public function runningProcesses(): Collection
+    {
+        return $this->processes()->filter(function ($process) {
+            return $process->process->isRunning();
+        });
+    }
+
     public function scale($processes): void
     {
         $processes = max(0, (int)$processes);
@@ -90,25 +97,19 @@ class ProcessPool implements Countable
         // terminated so they can start terminating. Terminating is a graceful operation
         // so any jobs they are already running will finish running before these quit.
         collect($this->terminatingProcesses)
-            ->each(function ($process) {
+            ->each(function (array $process) {
                 $process['process']->terminate();
             });
     }
 
-    public function markForTermination(Process $process)
+    public function markForTermination(Process $process): void
     {
         $this->terminatingProcesses[] = [
             'process' => $process, 'terminatedAt' => CarbonImmutable::now(),
         ];
     }
 
-    /**
-     * Remove the given number of processes from the process array.
-     *
-     * @param int $count
-     * @return void
-     */
-    protected function removeProcesses($count)
+    protected function removeProcesses(int $count): void
     {
         array_splice($this->processes, 0, $count);
 

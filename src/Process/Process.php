@@ -50,12 +50,7 @@ class Process
 
     public function terminate(): void
     {
-        if(defined('SIGTERM')) {
-            $this->sendSignal(SIGTERM);
-        } else {
-            call_user_func($this->output, null, 'Sigterm is not supported. Using stop() instead.');
-            $this->systemProcess->stop();
-        }
+        $this->sendSignal(SIGTERM);
     }
 
     public function stop(): void
