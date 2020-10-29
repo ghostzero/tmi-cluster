@@ -8,7 +8,6 @@ use Countable;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process as SystemProcess;
 
@@ -18,9 +17,6 @@ class ProcessPool implements Countable
     private array $terminatingProcesses = [];
     private ProcessOptions $options;
     private Closure $output;
-    /**
-     * @var Supervisor
-     */
     private Supervisor $supervisor;
 
     public function __construct(ProcessOptions $options, Closure $output, Supervisor $supervisor)
@@ -120,7 +116,7 @@ class ProcessPool implements Countable
     {
         $process = $this->createProcess();
 
-        $process->handleOutputUsing(function ($type, $line) use($process) {
+        $process->handleOutputUsing(function ($type, $line) use ($process) {
             call_user_func($this->output, $type, $process->getUuid() . ' | ' . $line);
         });
 
