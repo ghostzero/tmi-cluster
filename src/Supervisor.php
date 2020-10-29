@@ -4,6 +4,9 @@ namespace GhostZero\TmiCluster;
 
 use Closure;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\Contracts\Pausable;
+use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
 use GhostZero\TmiCluster\Process\ProcessOptions;
 use GhostZero\TmiCluster\Process\ProcessPool;
@@ -11,8 +14,10 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Collection;
 use Throwable;
 
-class Supervisor
+class Supervisor implements Pausable, Restartable, Terminable
 {
+    use ListensForSignals;
+
     public bool $working = true;
     public Models\Supervisor $model;
     public array $processPools = [];
@@ -35,6 +40,8 @@ class Supervisor
 
     public function monitor(): void
     {
+        $this->listenForSignals();
+
         $this->model->save();
 
         while (true) {
@@ -57,6 +64,8 @@ class Supervisor
     public function loop(): void
     {
         try {
+            $this->processPendingSignals();
+
             // todo process pending commands
             $this->processPendingCommands();
 
@@ -120,6 +129,60 @@ class Supervisor
     public function processes(): Collection
     {
         return $this->pools()->map(fn(ProcessPool $x) => $x->processes())->collapse();
+    }
+
+    public function pause()
+    {
+        // TODO: Implement pause() method.
+    }
+
+    public function continue()
+    {
+        // TODO: Implement continue() method.
+    }
+
+    public function restart()
+    {
+        // TODO: Implement restart() method.
+    }
+
+    public function terminate($status = 0)
+    {
+        $this->working = false;
+
+        // We will mark this supervisor as terminating so that any user interface can
+        // correctly show the supervisor's status. Then, we will scale the process
+        // pools down to zero workers to gracefully terminate them all out here.
+        $this->model->forceDelete();
+
+        $this->pools()->each(function ($pool) {
+            $pool->processes()->each(function ($process) {
+                $process->terminate();
+            });
+        });
+
+        if ($this->shouldWait()) {
+            while ($this->pools()->map->runningProcesses()->collapse()->count()) {
+                sleep(1);
+            }
+        }
+
+        $this->exit($status);
+    }
+
+    protected function shouldWait()
+    {
+        return config('tmi-cluster.fast_termination');
+    }
+
+    protected function exit($status = 0)
+    {
+        $this->exitProcess($status);
+    }
+
+    protected function exitProcess($status = 0)
+    {
+        exit((int) $status);
     }
 
     private function processPendingCommands(): void
