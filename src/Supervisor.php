@@ -131,22 +131,28 @@ class Supervisor implements Pausable, Restartable, Terminable
         return $this->pools()->map(fn(ProcessPool $x) => $x->processes())->collapse();
     }
 
-    public function pause()
+    public function pause(): void
     {
-        // TODO: Implement pause() method.
+        $this->working = false;
+
+        $this->pools()->each(fn(ProcessPool $x) => $x->pause());
     }
 
-    public function continue()
+    public function continue(): void
     {
-        // TODO: Implement continue() method.
+        $this->working = true;
+
+        $this->pools()->each(fn(ProcessPool $x) => $x->continue());
     }
 
-    public function restart()
+    public function restart(): void
     {
-        // TODO: Implement restart() method.
+        $this->working = true;
+
+        $this->pools()->each(fn(ProcessPool $x) => $x->restart());
     }
 
-    public function terminate($status = 0)
+    public function terminate($status = 0): void
     {
         $this->working = false;
 

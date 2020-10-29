@@ -5,13 +5,16 @@ namespace GhostZero\TmiCluster\Process;
 use Carbon\CarbonImmutable;
 use Closure;
 use Countable;
+use GhostZero\TmiCluster\Contracts\Pausable;
+use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process as SystemProcess;
 
-class ProcessPool implements Countable
+class ProcessPool implements Countable, Pausable, Restartable, Terminable
 {
     private array $processes = [];
     private array $terminatingProcesses = [];
@@ -127,6 +130,11 @@ class ProcessPool implements Countable
 
     protected function createProcess(): Process
     {
+        /** @var SystemProcess $class */
+        $class = config('horizon.fast_termination')
+            ? BackgroundProcess::class
+            : SystemProcess::class;
+
         $model = SupervisorProcess::query()->forceCreate([
             'id' => Str::uuid(),
             'supervisor_id' => $this->supervisor->model->getKey(),
@@ -135,7 +143,7 @@ class ProcessPool implements Countable
             'last_ping_at' => now(),
         ]);
 
-        return new Process(SystemProcess::fromShellCommandline(
+        return new Process($class::fromShellCommandline(
             $this->options->toWorkerCommand($model->getKey()), $this->options->getWorkingDirectory()
         )->setTimeout(null)->disableOutput(), $model->getKey());
     }
@@ -147,5 +155,19 @@ class ProcessPool implements Countable
         $this->scale(0);
 
         $this->scale($count);
+    }
+
+    public function pause(): void
+    {
+        $this->working = false;
+
+        collect($this->processes)->each(fn(Process $x) => $x->stop());
+    }
+
+    public function continue(): void
+    {
+        $this->working = true;
+
+        collect($this->processes)->each(fn(Process $x) => $x->continue());
     }
 }

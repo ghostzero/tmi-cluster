@@ -10,5 +10,5 @@ interface Terminable
      * @param  int  $status
      * @return void
      */
-    public function terminate($status = 0);
+    public function terminate($status = 0): void;
 }

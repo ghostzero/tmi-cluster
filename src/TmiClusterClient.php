@@ -10,13 +10,18 @@ use GhostZero\Tmi\Tags;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\Contracts\Pausable;
+use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\IrcCommandEvent;
 use GhostZero\TmiCluster\Events\IrcMessageEvent;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 
-class TmiClusterClient implements ClusterClient
+class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminable
 {
+    use ListensForSignals;
+
     /**
      * @var SupervisorProcess
      */
@@ -50,6 +55,7 @@ class TmiClusterClient implements ClusterClient
             //
         };
 
+        $this->listenForSignals();
         $this->registerPeriodicTimer();
         $this->registerEvents();
     }
@@ -69,29 +75,11 @@ class TmiClusterClient implements ClusterClient
     private function registerPeriodicTimer(): void
     {
         $this->client->getLoop()->addPeriodicTimer(2, function () {
-            $commands = $this->commandQueue->pending($this->getQueueName('input'));
-            $commands = array_merge($commands, $this->commandQueue->pending('*'));
-            foreach ($commands as $command) {
-                $this->metrics[self::METRIC_COMMAND_QUEUE_COMMANDS]++;
-                switch ($command->command) {
-                    case CommandQueue::COMMAND_TMI_WRITE:
-                        call_user_func($this->output, null, $command->options->raw_command);
-                        $this->client->write($command->options->raw_command);
-                        break;
-                    case CommandQueue::COMMAND_TMI_JOIN:
-                        $this->client->join($command->options->channel);
-                        break;
-                    case CommandQueue::COMMAND_TMI_PART:
-                        $this->client->part($command->options->channel);
-                        break;
-                    case CommandQueue::COMMAND_CLIENT_EXIT:
-                        exit(0);
-                    default:
-                        call_user_func($this->output, null, sprintf('Command %s not supported', $command->command));
-                }
-            }
+            $this->processPendingSignals();
 
-            // update tmi cluster state
+            $this->processPendingCommands();
+
+            // Update all model data here
             $this->model->forceFill([
                 'state' => $this->client->isConnected()
                     ? SupervisorProcess::STATE_CONNECTED
@@ -99,7 +87,12 @@ class TmiClusterClient implements ClusterClient
                 'channels' => array_keys($this->client->getChannels()),
                 'last_ping_at' => now(),
                 'metrics' => $this->getMetrics(),
-            ])->save();
+            ]);
+
+            // Next, we'll persist the process state to storage so that it can be read by a
+            // user interface. This contains information on the specific options for it and
+            // the current number of clients for easy load monitoring.
+            $this->model->save();
 
             event(new PeriodicTimerCalled());
         });
@@ -152,5 +145,50 @@ class TmiClusterClient implements ClusterClient
     public function connect(): void
     {
         $this->client->connect();
+    }
+
+    private function processPendingCommands(): void
+    {
+        $commands = $this->commandQueue->pending($this->getQueueName('input'));
+        $commands = array_merge($commands, $this->commandQueue->pending('*'));
+        foreach ($commands as $command) {
+            $this->metrics[self::METRIC_COMMAND_QUEUE_COMMANDS]++;
+            switch ($command->command) {
+                case CommandQueue::COMMAND_TMI_WRITE:
+                    call_user_func($this->output, null, $command->options->raw_command);
+                    $this->client->write($command->options->raw_command);
+                    break;
+                case CommandQueue::COMMAND_TMI_JOIN:
+                    $this->client->join($command->options->channel);
+                    break;
+                case CommandQueue::COMMAND_TMI_PART:
+                    $this->client->part($command->options->channel);
+                    break;
+                case CommandQueue::COMMAND_CLIENT_EXIT:
+                    exit(0);
+                default:
+                    call_user_func($this->output, null, sprintf('Command %s not supported', $command->command));
+            }
+        }
+    }
+
+    public function pause(): void
+    {
+        // TODO: Implement pause() method.
+    }
+
+    public function continue(): void
+    {
+        // TODO: Implement continue() method.
+    }
+
+    public function restart(): void
+    {
+        // TODO: Implement restart() method.
+    }
+
+    public function terminate($status = 0): void
+    {
+        // TODO: Implement terminate() method.
     }
 }
