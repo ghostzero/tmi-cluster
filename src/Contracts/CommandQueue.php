@@ -31,6 +31,16 @@ interface CommandQueue
     public const COMMAND_CLIENT_EXIT = 'client:exit';
 
     /**
+     * Scales out the supervisor by one process.
+     */
+    public const COMMAND_SUPERVISOR_SCALE_OUT = 'supervisor:scale-out';
+
+    /**
+     * Scales in the supervisor by one process.
+     */
+    public const COMMAND_SUPERVISOR_SCALE_IN = 'supervisor:scale-in';
+
+    /**
      * Push a command onto a queue.
      *
      * @param  string  $name

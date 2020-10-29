@@ -126,7 +126,7 @@ class AutoScale
         return (($channelCount / $serverCount) / $channelLimit) * 100;
     }
 
-    private function scaleOut(Supervisor $supervisor): void
+    public function scaleOut(Supervisor $supervisor): void
     {
         $count = $supervisor->processes()->count();
         $supervisor->output(null, 'Scale out: ' . ($count + 1));
@@ -138,7 +138,7 @@ class AutoScale
         $supervisor->scale($count + 1);
     }
 
-    private function scaleIn(Supervisor $supervisor): void
+    public function scaleIn(Supervisor $supervisor): void
     {
         $count = $supervisor->processes()->count();
 

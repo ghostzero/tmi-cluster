@@ -19,7 +19,7 @@ class SupervisorRepository implements Repository
     {
         /** @var Models\Supervisor $supervisor */
         $supervisor = Models\Supervisor::query()->create(array_merge([
-            'id' => sprintf('%s-%s', gethostname(), Str::random(4)),
+            'id' => $this->generateUniqueSupervisorKey(),
             'last_ping_at' => now(),
             'metrics' => [],
             'options' => [
@@ -74,5 +74,20 @@ class SupervisorRepository implements Repository
         if ($process->is_stale) {
             $this->deleteStaleProcess($process);
         }
+    }
+
+    private function generateUniqueSupervisorKey(int $length = 4): string
+    {
+        $key = sprintf('%s-%s', gethostname(), Str::random($length));
+
+        $exists = Models\Supervisor::query()
+            ->whereKey($key)
+            ->exists();
+
+        if ($exists) {
+            throw new DomainException('A Supervisor with this name already exists.');
+        }
+
+        return $key;
     }
 }

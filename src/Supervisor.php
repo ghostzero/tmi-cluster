@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster;
 
 use Closure;
-use DomainException;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
 use GhostZero\TmiCluster\Process\ProcessOptions;
@@ -14,39 +13,28 @@ use Throwable;
 
 class Supervisor
 {
-    public array $processPools = [];
-
     public bool $working = true;
-
-    private Closure $output;
-
     public Models\Supervisor $model;
+    public array $processPools = [];
+    private AutoScale $autoScale;
+    private JoinHandler $joinHandler;
+    private CommandQueue $commandQueue;
+    private Closure $output;
 
     public function __construct(Models\Supervisor $model)
     {
         $this->model = $model;
         $this->processPools = $this->createProcessPools();
+        $this->autoScale = app(AutoScale::class);
+        $this->joinHandler = app(JoinHandler::class);
+        $this->commandQueue = app(CommandQueue::class);
         $this->output = static function () {
             //
         };
     }
 
-    public function ensureNoDuplicateSupervisors(): void
-    {
-        $exists = $this->model->newModelQuery()
-            ->where(['name' => $this->model->name])
-            ->whereKeyNot($this->model->getKey())
-            ->exists();
-
-        if ($exists) {
-            throw new DomainException('A Supervisor with this name already exists.');
-        }
-    }
-
     public function monitor(): void
     {
-        $this->ensureNoDuplicateSupervisors();
-
         $this->model->save();
 
         while (true) {
@@ -103,7 +91,7 @@ class Supervisor
 
     private function autoScale(): void
     {
-        app(AutoScale::class)->scale($this);
+        $this->autoScale->scale($this);
     }
 
     private function createProcessPools(): array
@@ -136,24 +124,20 @@ class Supervisor
 
     private function processPendingCommands(): void
     {
-        /** @var CommandQueue $commandQueue */
-        $commandQueue = app(CommandQueue::class);
-        $commands = $commandQueue->pending($this->model->getKey());
+        $commands = $this->commandQueue->pending($this->model->getKey());
 
         foreach ($commands as $command) {
             switch ($command->command) {
+                case CommandQueue::COMMAND_SUPERVISOR_SCALE_OUT:
+                    $this->autoScale->scaleOut($this);
+                    break;
+                case CommandQueue::COMMAND_SUPERVISOR_SCALE_IN:
+                    $this->autoScale->scaleIn($this);
+                    break;
                 case CommandQueue::COMMAND_TMI_JOIN:
-                    $this->handleJoin($command->options->channel);
+                    $this->joinHandler->join($this, $command->options->channel);
                     break;
             }
         }
-    }
-
-    private function handleJoin($channel): void
-    {
-        // todo implement irc join
-        // if processes full force join
-        // if some space available, join
-        // if no space available, spin up, re-queue channel
     }
 }
