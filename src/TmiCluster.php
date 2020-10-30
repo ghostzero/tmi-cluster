@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster;
 
 use Exception;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\Http\Controllers;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
@@ -55,13 +56,14 @@ class TmiCluster
 
     public static function routes(): void
     {
-        Route::middleware('web')
-            ->prefix('tmi-cluster')
-            ->namespace('GhostZero\\TmiCluster\\Http\\Controllers')
-            ->group(function () {
-                Route::get('', 'DashboardController@index');
-                Route::get('statistics', 'DashboardController@statistics');
-                Route::get('metrics', 'MetricsController@handle');
-            });
+        Route::group([
+            'domain' => config('tmi-cluster.domain', null),
+            'prefix' => config('tmi-cluster.path'),
+            'middleware' => config('tmi-cluster.middleware', 'web'),
+        ], function () {
+            Route::get('', [Controllers\DashboardController::class, 'index']);
+            Route::get('statistics', [Controllers\DashboardController::class, 'statistics']);
+            Route::get('metrics', [Controllers\MetricsController::class, 'handle']);
+        });
     }
 }

@@ -1,0 +1,36 @@
+{
+  "name": "tmi-cluster",
+  "version": "0.0.1",
+  "description": "This project is still in an early stage. Please do not put this software into production yet, as the APIs are subject to change. Everyone is welcome to contribute to this project.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "npm run development",
+    "development": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+    "watch": "npm run development -- --watch",
+    "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
+    "prod": "npm run production",
+    "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghostzero/tmi-cluster.git"
+  },
+  "keywords": [],
+  "author": "René Preuß",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ghostzero/tmi-cluster/issues"
+  },
+  "homepage": "https://github.com/ghostzero/tmi-cluster#readme",
+  "devDependencies": {
+    "cross-env": "^7.0.2",
+    "laravel-mix": "^5.0.7",
+    "resolve-url-loader": "^3.1.0",
+    "sass": "^1.28.0",
+    "sass-loader": "^8.0.2",
+    "vue-template-compiler": "^2.6.12"
+  }
+}
