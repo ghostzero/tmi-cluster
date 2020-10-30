@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster;
 
 use Exception;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\Exceptions\NotFoundSupervisorException;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
@@ -28,12 +29,19 @@ class TmiCluster
         ])]);
     }
 
-    public static function joinNextServer(array $channels): void
+    /**
+     * @param array $channels a list of channels that needs to be joined
+     * @param array $staleIds a list of supervisors or processes ids, that needs to be avoid
+     * @param bool $throwNotFoundException
+     */
+    public static function joinNextServer(array $channels, array $staleIds = [], bool $throwNotFoundException = false): void
     {
+        /** @var CommandQueue $commandQueue */
         $commandQueue = app(CommandQueue::class);
 
-        $supervisor = Models\Supervisor::query()
+        $supervisors = Models\Supervisor::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(10))
+            ->whereNotIn('id', $staleIds)
             ->get()->map(function (Models\Supervisor $supervisor) {
                 return [
                     'name' => $supervisor->getKey(),
@@ -43,13 +51,30 @@ class TmiCluster
                 ];
             })->sortBy('channels');
 
-        foreach ($channels as $channel) {
-            $supervisor = $supervisor->sortBy('channels');
-            $nextSupervisor = $supervisor->shift();
-            $nextSupervisor['channels'] += 1;
-            $supervisor->push($nextSupervisor);
+        if ($supervisors->isEmpty()) {
+            if ($throwNotFoundException) {
+                // we let handle the parent call the decision
+                throw NotFoundSupervisorException::fromJoinNextServer();
+            }
 
-            $commandQueue->push($nextSupervisor['name'], CommandQueue::COMMAND_TMI_JOIN, ['channel' => $channel]);
+            // we didn't get any server, that is ready to join our channels
+            // so we move them to our lost and found channel queue
+            $commandQueue->push(CommandQueue::NAME_LOST_AND_FOUND, CommandQueue::COMMAND_TMI_JOIN, [
+                'type' => 'channels',
+                'channels' => $channels,
+            ]);
+        }
+
+        foreach ($channels as $channel) {
+            $supervisors = $supervisors->sortBy('channels');
+            $nextSupervisor = $supervisors->shift();
+            $nextSupervisor['channels'] += 1;
+            $supervisors->push($nextSupervisor);
+
+            $commandQueue->push($nextSupervisor['name'], CommandQueue::COMMAND_TMI_JOIN, [
+                'channel' => $channel,
+                'stale_ids' => $staleIds,
+            ]);
         }
     }
 

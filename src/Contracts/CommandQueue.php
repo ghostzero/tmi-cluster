@@ -41,6 +41,16 @@ interface CommandQueue
     public const COMMAND_SUPERVISOR_SCALE_IN = 'supervisor:scale-in';
 
     /**
+     * Queue to handle lost and found cases. Eg. a channel cannot be joined.
+     */
+    public const NAME_LOST_AND_FOUND = 'lost-and-found';
+
+    /**
+     * Supervisor queue: First-come, First-served.
+     */
+    public const NAME_ANY_SUPERVISOR = '*';
+
+    /**
      * Push a command onto a queue.
      *
      * @param  string  $name

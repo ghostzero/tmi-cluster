@@ -170,4 +170,11 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
 
         collect($this->processes)->each(fn(Process $x) => $x->continue());
     }
+
+    public function terminate($status = 0): void
+    {
+        $this->working = false;
+
+        collect($this->processes)->each(fn(Process $x) => $x->terminate($status));
+    }
 }

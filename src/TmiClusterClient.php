@@ -22,17 +22,11 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 {
     use ListensForSignals;
 
-    /**
-     * @var SupervisorProcess
-     */
+    private bool $working = true;
     private $model;
-
     private Client $client;
-
     private ClusterClientOptions $options;
-
     private CommandQueue $commandQueue;
-
     private Closure $output;
 
     private const METRIC_IRC_MESSAGES = 'irc_messages';
@@ -147,10 +141,45 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         $this->client->connect();
     }
 
+    public function pause(): void
+    {
+        $this->working = false;
+    }
+
+    public function continue(): void
+    {
+        $this->working = true;
+    }
+
+    public function restart(): void
+    {
+        $this->working = true;
+    }
+
+    public function terminate($status = 0): void
+    {
+        $this->working = false;
+
+        // evacuate all current channels to a new process
+        TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
+
+        $this->exit($status);
+    }
+
+    protected function exit($status = 0): void
+    {
+        $this->exitProcess($status);
+    }
+
+    protected function exitProcess($status = 0): void
+    {
+        exit((int)$status);
+    }
+
     private function processPendingCommands(): void
     {
         $commands = $this->commandQueue->pending($this->getQueueName('input'));
-        $commands = array_merge($commands, $this->commandQueue->pending('*'));
+        $commands = array_merge($commands, $this->commandQueue->pending(CommandQueue::NAME_ANY_SUPERVISOR));
         foreach ($commands as $command) {
             $this->metrics[self::METRIC_COMMAND_QUEUE_COMMANDS]++;
             switch ($command->command) {
@@ -170,25 +199,5 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
                     call_user_func($this->output, null, sprintf('Command %s not supported', $command->command));
             }
         }
-    }
-
-    public function pause(): void
-    {
-        // TODO: Implement pause() method.
-    }
-
-    public function continue(): void
-    {
-        // TODO: Implement continue() method.
-    }
-
-    public function restart(): void
-    {
-        // TODO: Implement restart() method.
-    }
-
-    public function terminate($status = 0): void
-    {
-        // TODO: Implement terminate() method.
     }
 }
