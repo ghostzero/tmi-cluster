@@ -31,6 +31,7 @@ class Supervisor extends Model
 
     protected $casts = [
         'options' => 'array',
+        'metrics' => 'array',
     ];
 
     public function getIsStaleAttribute(): bool

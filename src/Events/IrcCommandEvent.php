@@ -2,14 +2,31 @@
 
 namespace GhostZero\TmiCluster\Events;
 
-class IrcCommandEvent
+use GhostZero\Tmi\Client;
+use GhostZero\Tmi\Tags;
+use GhostZero\TmiCluster\Contracts\Signed;
+use Illuminate\Support\Str;
+
+class IrcCommandEvent implements Signed
 {
-    public string $string;
+    public Client $client;
+    public string $event;
     public array $payload;
 
-    public function __construct(string $string, array $payload)
+    public function __construct(Client $client, string $string, array $payload)
     {
-        $this->string = $string;
+        $this->client = $client;
+        $this->event = $string;
         $this->payload = $payload;
+    }
+
+    public function signature(): string
+    {
+        foreach ($this->payload as $payload) {
+            if ($payload instanceof Tags) {
+                return $payload['id'];
+            }
+        }
+        return Str::uuid();
     }
 }

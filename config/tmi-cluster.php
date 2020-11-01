@@ -54,7 +54,6 @@ return [
     'tmi' => [
         'options' => ['debug' => false],
         'connection' => [
-            'secure' => true,
             'reconnect' => false,
             'rejoin' => true,
         ],

@@ -8,6 +8,7 @@ use Countable;
 use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Terminable;
+use GhostZero\TmiCluster\Events\ProcessScaled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Support\Collection;
@@ -98,6 +99,13 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
         collect($this->terminatingProcesses)
             ->each(function (array $process) {
                 $process['process']->terminate();
+
+                event(new ProcessScaled(
+                    sprintf('Auto Scaling: Process terminated'),
+                    sprintf('Terminating process instance: %s', $process['process']->getUuid()),
+                    'SUPERVISOR_PROCESS_TERMINATE',
+                    sprintf('At %s an process was taken out of service in response of a scale in.', date('Y-m-d H:i:s'))
+                ));
             });
     }
 
@@ -122,6 +130,18 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
         $process->handleOutputUsing(function ($type, $line) use ($process) {
             call_user_func($this->output, $type, $process->getUuid() . ' | ' . $line);
         });
+
+        event(new ProcessScaled(
+            sprintf('Auto Scaling: Process launched'),
+            sprintf('Launching a new process instance: %s', $process->getUuid()),
+            'SUPERVISOR_PROCESS_LAUNCH',
+            sprintf(
+                'At %s an instance was started in response to a difference between desired and actual capacity, increasing the capacity from %s to %s.',
+                $count = $this->count(),
+                $count + 1,
+                date('Y-m-d H:i:s')
+            )
+        ));
 
         $this->processes[] = $process;
 

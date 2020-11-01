@@ -63,7 +63,7 @@ class AutoScale
 
             $this->releaseStaleSupervisors($supervisor);
         } catch (Throwable $exception) {
-            $supervisor->output(null, $exception->getMessage());
+            $supervisor->output(null, $exception->getTraceAsString());
         }
     }
 
@@ -122,6 +122,10 @@ class AutoScale
         $channelLimit = config('tmi-cluster.auto_scale.thresholds.channels');
         $channelCount = $c->sum();
         $serverCount = $c->count();
+
+        if ($serverCount <= 0) {
+            return 0;
+        }
 
         return (($channelCount / $serverCount) / $channelLimit) * 100;
     }

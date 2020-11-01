@@ -12,6 +12,26 @@ use RuntimeException;
 class TmiCluster
 {
     /**
+     * The Slack notifications webhook URL.
+     */
+    public static ?string $slackWebhookUrl = null;
+
+    /**
+     * The Slack notifications channel.
+     */
+    public static ?string $slackChannel = null;
+
+    /**
+     * The SMS notifications phone number.
+     */
+    public static ?string $smsNumber = null;
+
+    /**
+     * The email address for notifications.
+     */
+    public static ?string $email = null;
+
+    /**
      * Configure the Redis databases that will store TMI Cluster data.
      *
      * @param string $connection
@@ -76,6 +96,22 @@ class TmiCluster
                 'stale_ids' => $staleIds,
             ]);
         }
+    }
+
+    public static function routeMailNotificationsTo(string $email): void
+    {
+        static::$email = $email;
+    }
+
+    public static function routeSlackNotificationsTo(string $url, string $channel = null)
+    {
+        static::$slackWebhookUrl = $url;
+        static::$slackChannel = $channel;
+    }
+
+    public static function routeSmsNotificationsTo(string $number): void
+    {
+        static::$smsNumber = $number;
     }
 
     public static function routes(): void

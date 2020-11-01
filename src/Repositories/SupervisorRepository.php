@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster\Repositories;
 
+use DomainException;
 use Exception;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository as Repository;
 use GhostZero\TmiCluster\Models;

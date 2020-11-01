@@ -4,13 +4,15 @@ namespace GhostZero\TmiCluster\Providers;
 
 use Exception;
 use GhostZero\TmiCluster\Commands;
+use GhostZero\TmiCluster\EventMap;
 use GhostZero\TmiCluster\ServiceBindings;
 use GhostZero\TmiCluster\TmiCluster;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Support\ServiceProvider;
 
 class TmiClusterServiceProvider extends ServiceProvider
 {
-    use ServiceBindings;
+    use EventMap, ServiceBindings;
 
     /**
      * Boot the TmiCluster service.
@@ -20,9 +22,21 @@ class TmiClusterServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configure();
+        $this->registerEvents();
         $this->registerServices();
         $this->registerCommands();
-        $this->registerFrontend();
+        $this->registerResources();
+    }
+
+    protected function registerEvents(): void
+    {
+        $events = $this->app->make(Dispatcher::class);
+
+        foreach ($this->events as $event => $listeners) {
+            foreach ($listeners as $listener) {
+                $events->listen($event, $listener);
+            }
+        }
     }
 
     /**
@@ -80,7 +94,7 @@ class TmiClusterServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    private function registerFrontend(): void
+    private function registerResources(): void
     {
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'tmi-cluster');
     }
