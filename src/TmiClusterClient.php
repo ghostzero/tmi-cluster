@@ -5,6 +5,8 @@ namespace GhostZero\TmiCluster;
 use Closure;
 use GhostZero\Tmi\Client;
 use GhostZero\Tmi\ClientOptions;
+use GhostZero\Tmi\Events\Event;
+use GhostZero\Tmi\Events\Twitch\MessageEvent;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
@@ -12,8 +14,6 @@ use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Signed;
 use GhostZero\TmiCluster\Contracts\Terminable;
-use GhostZero\TmiCluster\Events\IrcCommandEvent;
-use GhostZero\TmiCluster\Events\IrcMessageEvent;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -116,28 +116,12 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             call_user_func($this->output, null, 'Inspector ready! Visit: ' . $url);
         });
 
-        $this->client
-            ->on('message', function ($channel, $tags, $user, $message, $self) {
-                if ($self) return;
-                $this->event(new IrcMessageEvent($this->client, $channel, $tags, $user, $message, $self), 'message:');
-            })
-            // forward all irc commands as new IrcCommandEvent
-            ->on('cheer', fn() => $this->event(new IrcCommandEvent($this->client, 'cheer', func_get_args())))
-            ->on('hosting', fn() => $this->event(new IrcCommandEvent($this->client, 'hosting', func_get_args())))
-            ->on('hosted', fn() => $this->event(new IrcCommandEvent($this->client, 'hosted', func_get_args())))
-            ->on('raided', fn() => $this->event(new IrcCommandEvent($this->client, 'raided', func_get_args())))
-            ->on('subscription', fn() => $this->event(new IrcCommandEvent($this->client, 'subscription', func_get_args())))
-            ->on('submysterygift', fn() => $this->event(new IrcCommandEvent($this->client, 'submysterygift', func_get_args())))
-            ->on('resub', fn() => $this->event(new IrcCommandEvent($this->client, 'resub', func_get_args())))
-            ->on('subgift', fn() => $this->event(new IrcCommandEvent($this->client, 'subgift', func_get_args())))
-            ->on('giftpaidupgrade', fn() => $this->event(new IrcCommandEvent($this->client, 'giftpaidupgrade', func_get_args())))
-            ->on('anongiftpaidupgrade', fn() => $this->event(new IrcCommandEvent($this->client, 'anongiftpaidupgrade', func_get_args())));
+        $this->client->any(fn($e) => $this->event($e));
     }
 
-    private function event(Signed $event, $key = 'event:'): void
+    private function event(Signed $event): void
     {
-        $signature = $event->signature();
-        if (!$this->lock->get($key . $signature, 300)) {
+        if ($event->signature() && !$this->lock->get('event:' . $event->signature(), 300)) {
             return;
         }
 
@@ -148,9 +132,9 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             return;
         }
 
-        if ($event instanceof IrcMessageEvent) {
+        if ($event instanceof MessageEvent) {
             $this->metrics[self::METRIC_IRC_MESSAGES]++;
-        } elseif ($event instanceof IrcCommandEvent) {
+        } elseif ($event instanceof Event) {
             $this->metrics[self::METRIC_IRC_COMMANDS]++;
         }
     }
