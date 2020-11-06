@@ -5,19 +5,24 @@ namespace GhostZero\TmiCluster\Models;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
 /**
- * @property mixed name
+ * @property string id
  * @property mixed options
  * @property bool is_stale
  * @property CarbonInterface last_ping_at
  * @property SupervisorProcess[]|Collection processes
+ * @property array|null metrics
  */
 class Supervisor extends Model
 {
     use SoftDeletes;
+
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $guarded = [];
 
@@ -27,6 +32,7 @@ class Supervisor extends Model
 
     protected $casts = [
         'options' => 'array',
+        'metrics' => 'array',
     ];
 
     public function getIsStaleAttribute(): bool
@@ -38,4 +44,8 @@ class Supervisor extends Model
     {
         return $this->hasMany(SupervisorProcess::class);
     }
+
+
+
+
 }

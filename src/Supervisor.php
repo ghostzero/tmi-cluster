@@ -3,48 +3,45 @@
 namespace GhostZero\TmiCluster;
 
 use Closure;
-use DomainException;
+use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\Contracts\Pausable;
+use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
+use GhostZero\TmiCluster\Process\Process;
 use GhostZero\TmiCluster\Process\ProcessOptions;
 use GhostZero\TmiCluster\Process\ProcessPool;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Collection;
 use Throwable;
 
-class Supervisor
+class Supervisor implements Pausable, Restartable, Terminable
 {
-    public array $processPools = [];
+    use ListensForSignals;
 
     public bool $working = true;
-
-    private Closure $output;
-
     public Models\Supervisor $model;
+    public array $processPools = [];
+    private AutoScale $autoScale;
+    private JoinHandler $joinHandler;
+    private CommandQueue $commandQueue;
+    private Closure $output;
 
     public function __construct(Models\Supervisor $model)
     {
         $this->model = $model;
         $this->processPools = $this->createProcessPools();
+        $this->autoScale = app(AutoScale::class);
+        $this->joinHandler = app(JoinHandler::class);
+        $this->commandQueue = app(CommandQueue::class);
         $this->output = static function () {
             //
         };
     }
 
-    public function ensureNoDuplicateSupervisors(): void
-    {
-        $exists = $this->model->newModelQuery()
-            ->where(['name' => $this->model->name])
-            ->whereKeyNot($this->model->getKey())
-            ->exists();
-
-        if ($exists) {
-            throw new DomainException('A Supervisor with this name already exists.');
-        }
-    }
-
     public function monitor(): void
     {
-        $this->ensureNoDuplicateSupervisors();
+        $this->listenForSignals();
 
         $this->model->save();
 
@@ -68,7 +65,9 @@ class Supervisor
     public function loop(): void
     {
         try {
-            // todo process pending commands
+            $this->processPendingSignals();
+
+            $this->processPendingCommands();
 
             // If the supervisor is working, we will perform any needed scaling operations and
             // monitor all of these underlying worker processes to make sure they are still
@@ -82,6 +81,9 @@ class Supervisor
             // Update all model data here
             $this->model->forceFill([
                 'last_ping_at' => now(),
+                'metrics' => [
+                    // todo add some fancy metrics
+                ]
             ]);
 
             // Next, we'll persist the supervisor state to storage so that it can be read by a
@@ -98,12 +100,12 @@ class Supervisor
 
     private function autoScale(): void
     {
-        app(AutoScale::class)->scale($this);
+        $this->autoScale->scale($this);
     }
 
     private function createProcessPools(): array
     {
-        $options = new ProcessOptions($this->model->name, $this->model->options);
+        $options = new ProcessOptions($this->model->getKey(), $this->model->options);
         return [$this->createSingleProcessPool($options)];
     }
 
@@ -127,5 +129,84 @@ class Supervisor
     public function processes(): Collection
     {
         return $this->pools()->map(fn(ProcessPool $x) => $x->processes())->collapse();
+    }
+
+    public function pause(): void
+    {
+        $this->working = false;
+
+        $this->pools()->each(fn(ProcessPool $x) => $x->pause());
+    }
+
+    public function continue(): void
+    {
+        $this->working = true;
+
+        $this->pools()->each(fn(ProcessPool $x) => $x->continue());
+    }
+
+    public function restart(): void
+    {
+        $this->working = true;
+
+        $this->pools()->each(fn(ProcessPool $x) => $x->restart());
+    }
+
+    public function terminate($status = 0): void
+    {
+        $this->working = false;
+
+        // We will mark this supervisor as terminating so that any user interface can
+        // correctly show the supervisor's status. Then, we will scale the process
+        // pools down to zero workers to gracefully terminate them all out here.
+        $this->model->forceDelete();
+
+        $this->pools()->each(function (ProcessPool $pool) {
+            $pool->processes()->each(function (Process $process) {
+                $process->terminate();
+            });
+        });
+
+        if ($this->shouldWait()) {
+            while ($this->pools()->map(fn(ProcessPool $x) => $x->runningProcesses())->collapse()->count()) {
+                sleep(1);
+            }
+        }
+
+        $this->exit($status);
+    }
+
+    protected function shouldWait()
+    {
+        return config('tmi-cluster.fast_termination');
+    }
+
+    protected function exit($status = 0)
+    {
+        $this->exitProcess($status);
+    }
+
+    protected function exitProcess($status = 0)
+    {
+        exit((int) $status);
+    }
+
+    private function processPendingCommands(): void
+    {
+        $commands = $this->commandQueue->pending($this->model->getKey());
+
+        foreach ($commands as $command) {
+            switch ($command->command) {
+                case CommandQueue::COMMAND_SUPERVISOR_SCALE_OUT:
+                    $this->autoScale->scaleOut($this);
+                    break;
+                case CommandQueue::COMMAND_SUPERVISOR_SCALE_IN:
+                    $this->autoScale->scaleIn($this);
+                    break;
+                case CommandQueue::COMMAND_TMI_JOIN:
+                    $this->joinHandler->join($this, $command->options->channel);
+                    break;
+            }
+        }
     }
 }

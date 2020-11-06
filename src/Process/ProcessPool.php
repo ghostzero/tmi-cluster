@@ -5,22 +5,22 @@ namespace GhostZero\TmiCluster\Process;
 use Carbon\CarbonImmutable;
 use Closure;
 use Countable;
+use GhostZero\TmiCluster\Contracts\Pausable;
+use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\Terminable;
+use GhostZero\TmiCluster\Events\ProcessScaled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process as SystemProcess;
 
-class ProcessPool implements Countable
+class ProcessPool implements Countable, Pausable, Restartable, Terminable
 {
     private array $processes = [];
     private array $terminatingProcesses = [];
     private ProcessOptions $options;
     private Closure $output;
-    /**
-     * @var Supervisor
-     */
     private Supervisor $supervisor;
 
     public function __construct(ProcessOptions $options, Closure $output, Supervisor $supervisor)
@@ -43,6 +43,13 @@ class ProcessPool implements Countable
     public function processes(): Collection
     {
         return new Collection($this->processes);
+    }
+
+    public function runningProcesses(): Collection
+    {
+        return $this->processes()->filter(function ($process) {
+            return $process->process->isRunning();
+        });
     }
 
     public function scale($processes): void
@@ -90,25 +97,26 @@ class ProcessPool implements Countable
         // terminated so they can start terminating. Terminating is a graceful operation
         // so any jobs they are already running will finish running before these quit.
         collect($this->terminatingProcesses)
-            ->each(function ($process) {
+            ->each(function (array $process) {
                 $process['process']->terminate();
+
+                event(new ProcessScaled(
+                    sprintf('Auto Scaling: Process terminated'),
+                    sprintf('Terminating process instance: %s', $process['process']->getUuid()),
+                    'SUPERVISOR_PROCESS_TERMINATE',
+                    sprintf('At %s an process was taken out of service in response of a scale in.', date('Y-m-d H:i:s'))
+                ));
             });
     }
 
-    public function markForTermination(Process $process)
+    public function markForTermination(Process $process): void
     {
         $this->terminatingProcesses[] = [
             'process' => $process, 'terminatedAt' => CarbonImmutable::now(),
         ];
     }
 
-    /**
-     * Remove the given number of processes from the process array.
-     *
-     * @param int $count
-     * @return void
-     */
-    protected function removeProcesses($count)
+    protected function removeProcesses(int $count): void
     {
         array_splice($this->processes, 0, $count);
 
@@ -119,9 +127,21 @@ class ProcessPool implements Countable
     {
         $process = $this->createProcess();
 
-        $process->handleOutputUsing(function ($type, $line) use($process) {
+        $process->handleOutputUsing(function ($type, $line) use ($process) {
             call_user_func($this->output, $type, $process->getUuid() . ' | ' . $line);
         });
+
+        event(new ProcessScaled(
+            sprintf('Auto Scaling: Process launched'),
+            sprintf('Launching a new process instance: %s', $process->getUuid()),
+            'SUPERVISOR_PROCESS_LAUNCH',
+            sprintf(
+                'At %s an instance was started in response to a difference between desired and actual capacity, increasing the capacity from %s to %s.',
+                $count = $this->count(),
+                $count + 1,
+                date('Y-m-d H:i:s')
+            )
+        ));
 
         $this->processes[] = $process;
 
@@ -130,15 +150,20 @@ class ProcessPool implements Countable
 
     protected function createProcess(): Process
     {
+        /** @var SystemProcess $class */
+        $class = config('horizon.fast_termination')
+            ? BackgroundProcess::class
+            : SystemProcess::class;
+
         $model = SupervisorProcess::query()->forceCreate([
             'id' => Str::uuid(),
             'supervisor_id' => $this->supervisor->model->getKey(),
-            'state' => 'initialize',
+            'state' => SupervisorProcess::STATE_INITIALIZE,
             'channels' => [],
             'last_ping_at' => now(),
         ]);
 
-        return new Process(SystemProcess::fromShellCommandline(
+        return new Process($class::fromShellCommandline(
             $this->options->toWorkerCommand($model->getKey()), $this->options->getWorkingDirectory()
         )->setTimeout(null)->disableOutput(), $model->getKey());
     }
@@ -150,5 +175,26 @@ class ProcessPool implements Countable
         $this->scale(0);
 
         $this->scale($count);
+    }
+
+    public function pause(): void
+    {
+        $this->working = false;
+
+        collect($this->processes)->each(fn(Process $x) => $x->stop());
+    }
+
+    public function continue(): void
+    {
+        $this->working = true;
+
+        collect($this->processes)->each(fn(Process $x) => $x->continue());
+    }
+
+    public function terminate($status = 0): void
+    {
+        $this->working = false;
+
+        collect($this->processes)->each(fn(Process $x) => $x->terminate($status));
     }
 }

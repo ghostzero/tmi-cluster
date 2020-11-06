@@ -63,7 +63,7 @@ class AutoScale
 
             $this->releaseStaleSupervisors($supervisor);
         } catch (Throwable $exception) {
-            $supervisor->output(null, $exception->getMessage());
+            $supervisor->output(null, $exception->getTraceAsString());
         }
     }
 
@@ -123,10 +123,14 @@ class AutoScale
         $channelCount = $c->sum();
         $serverCount = $c->count();
 
+        if ($serverCount <= 0) {
+            return 0;
+        }
+
         return (($channelCount / $serverCount) / $channelLimit) * 100;
     }
 
-    private function scaleOut(Supervisor $supervisor): void
+    public function scaleOut(Supervisor $supervisor): void
     {
         $count = $supervisor->processes()->count();
         $supervisor->output(null, 'Scale out: ' . ($count + 1));
@@ -138,7 +142,7 @@ class AutoScale
         $supervisor->scale($count + 1);
     }
 
-    private function scaleIn(Supervisor $supervisor): void
+    public function scaleIn(Supervisor $supervisor): void
     {
         $count = $supervisor->processes()->count();
 

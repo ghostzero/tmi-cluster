@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster\Repositories;
 
+use DomainException;
 use Exception;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository as Repository;
 use GhostZero\TmiCluster\Models;
@@ -19,8 +20,9 @@ class SupervisorRepository implements Repository
     {
         /** @var Models\Supervisor $supervisor */
         $supervisor = Models\Supervisor::query()->create(array_merge([
-            'name' => sprintf('%s-%s', gethostname(), Str::random(4)),
+            'id' => $this->generateUniqueSupervisorKey(),
             'last_ping_at' => now(),
+            'metrics' => [],
             'options' => [
                 'nice' => 0,
             ]
@@ -42,10 +44,18 @@ class SupervisorRepository implements Repository
      */
     public function flushStale(): void
     {
-        $this->all()->each(function (Models\Supervisor $supervisor) {
+        $channels = [];
+        $staleIds = [];
+
+        $this->all()->each(function (Models\Supervisor $supervisor) use (&$channels, &$staleIds) {
             if ($supervisor->is_stale) {
                 try {
-                    $supervisor->processes()->each(fn($process) => $this->deleteStaleProcess($process));
+                    $staleIds[] = $supervisor->getKey();
+                    $supervisor->processes()->each(function (Models\SupervisorProcess $process) use (&$channels, &$staleIds) {
+                        $staleIds[] = $process->getKey();
+                        $channels = array_merge($channels, $process->channels);
+                        $this->deleteStaleProcess($process);
+                    });
                     $supervisor->delete();
                 } catch (Exception $e) {
                     throw $e;
@@ -54,13 +64,12 @@ class SupervisorRepository implements Repository
                 $supervisor->processes()->each(fn($process) => $this->deleteIfStaleProcess($process));
             }
         });
+
+        TmiCluster::joinNextServer($channels, $staleIds);
     }
 
     private function deleteStaleProcess($process): void
     {
-        // migrate stale channels into a fresh instance
-        TmiCluster::joinNextServer($process->channels);
-
         $process->delete();
     }
 
@@ -69,5 +78,20 @@ class SupervisorRepository implements Repository
         if ($process->is_stale) {
             $this->deleteStaleProcess($process);
         }
+    }
+
+    private function generateUniqueSupervisorKey(int $length = 4): string
+    {
+        $key = sprintf('%s-%s', gethostname(), Str::random($length));
+
+        $exists = Models\Supervisor::query()
+            ->whereKey($key)
+            ->exists();
+
+        if ($exists) {
+            throw new DomainException('A Supervisor with this name already exists.');
+        }
+
+        return $key;
     }
 }

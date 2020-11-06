@@ -30,6 +30,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | TMI Cluster Redis Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify if the supervisor should wait for all its processes
+    | to terminate. We recommend to wait before terminate the supervisor.
+    |
+    */
+
+    'fast_termination' => env('TMI_CLUSTER_FAST_TERMINATION', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | TMI Client Configuration
     |--------------------------------------------------------------------------
     |
@@ -42,8 +54,7 @@ return [
     'tmi' => [
         'options' => ['debug' => false],
         'connection' => [
-            'secure' => true,
-            'reconnect' => true,
+            'reconnect' => false,
             'rejoin' => true,
         ],
         'identity' => [

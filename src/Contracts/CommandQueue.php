@@ -31,6 +31,26 @@ interface CommandQueue
     public const COMMAND_CLIENT_EXIT = 'client:exit';
 
     /**
+     * Scales out the supervisor by one process.
+     */
+    public const COMMAND_SUPERVISOR_SCALE_OUT = 'supervisor:scale-out';
+
+    /**
+     * Scales in the supervisor by one process.
+     */
+    public const COMMAND_SUPERVISOR_SCALE_IN = 'supervisor:scale-in';
+
+    /**
+     * Queue to handle lost and found cases. Eg. a channel cannot be joined.
+     */
+    public const NAME_LOST_AND_FOUND = 'lost-and-found';
+
+    /**
+     * Supervisor queue: First-come, First-served.
+     */
+    public const NAME_ANY_SUPERVISOR = '*';
+
+    /**
      * Push a command onto a queue.
      *
      * @param  string  $name

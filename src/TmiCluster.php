@@ -3,12 +3,34 @@
 namespace GhostZero\TmiCluster;
 
 use Exception;
-use GhostZero\TmiCluster\Contracts\CommandQueue;
-use GhostZero\TmiCluster\Models\SupervisorProcess;
+use GhostZero\TmiCluster\Traits\TmiClusterHelpers;
 use Illuminate\Support\Facades\Route;
+use RuntimeException;
 
 class TmiCluster
 {
+    use TmiClusterHelpers;
+
+    /**
+     * The Slack notifications webhook URL.
+     */
+    public static ?string $slackWebhookUrl = null;
+
+    /**
+     * The Slack notifications channel.
+     */
+    public static ?string $slackChannel = null;
+
+    /**
+     * The SMS notifications phone number.
+     */
+    public static ?string $smsNumber = null;
+
+    /**
+     * The email address for notifications.
+     */
+    public static ?string $email = null;
+
     /**
      * Configure the Redis databases that will store TMI Cluster data.
      *
@@ -19,7 +41,7 @@ class TmiCluster
     public static function use(string $connection): void
     {
         if (is_null($config = config("database.redis.{$connection}"))) {
-            throw new Exception("Redis connection [{$connection}] has not been configured.");
+            throw new RuntimeException("Redis connection [{$connection}] has not been configured.");
         }
 
         config(['database.redis.tmi-cluster' => array_merge($config, [
@@ -27,27 +49,20 @@ class TmiCluster
         ])]);
     }
 
-    public static function joinNextServer(array $channels): void
+    public static function routeMailNotificationsTo(string $email): void
     {
-        $commandQueue = app(CommandQueue::class);
+        static::$email = $email;
+    }
 
-        $servers = SupervisorProcess::query()
-            ->whereTime('last_ping_at', '>', now()->subSeconds(10))
-            ->get()->map(function (SupervisorProcess $process) {
-                return [
-                    'name' => "{$process->getKey()}-input",
-                    'channels' => count($process->channels),
-                ];
-            })->sortBy('channels');
+    public static function routeSlackNotificationsTo(string $url, string $channel = null)
+    {
+        static::$slackWebhookUrl = $url;
+        static::$slackChannel = $channel;
+    }
 
-        foreach ($channels as $channel) {
-            $servers = $servers->sortBy('channels');
-            $nextServer = $servers->shift();
-            $nextServer['channels'] += 1;
-            $servers->push($nextServer);
-
-            $commandQueue->push($nextServer['name'], CommandQueue::COMMAND_TMI_JOIN, ['channel' => $channel]);
-        }
+    public static function routeSmsNotificationsTo(string $number): void
+    {
+        static::$smsNumber = $number;
     }
 
     public static function routes(): void
@@ -58,6 +73,7 @@ class TmiCluster
             ->group(function () {
                 Route::get('', 'DashboardController@index');
                 Route::get('statistics', 'DashboardController@statistics');
+                Route::get('metrics', 'MetricsController@handle');
             });
     }
 }

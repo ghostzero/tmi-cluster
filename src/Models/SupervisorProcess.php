@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property mixed supervisor_id
- * @property mixed state
- * @property mixed channels
+ * @property string id
+ * @property string supervisor_id
+ * @property string state
+ * @property array channels
  * @property Supervisor supervisor
  * @property CarbonInterface last_ping_at
  * @property bool is_stale
+ * @property array|null metrics
  */
 class SupervisorProcess extends Model
 {
@@ -23,12 +25,15 @@ class SupervisorProcess extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $guarded = [];
+
     protected $dates = [
         'last_ping_at',
     ];
 
     protected $casts = [
         'channels' => 'array',
+        'metrics' => 'array',
     ];
 
     public function supervisor(): BelongsTo

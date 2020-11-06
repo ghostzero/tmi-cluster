@@ -4,12 +4,15 @@ namespace GhostZero\TmiCluster\Process;
 
 use Carbon\CarbonImmutable;
 use Closure;
+use GhostZero\TmiCluster\Contracts\Pausable;
+use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\UnableToLaunchProcess;
 use GhostZero\TmiCluster\Events\WorkerProcessRestarting;
 use Symfony\Component\Process\Exception\ExceptionInterface;
 use Symfony\Component\Process\Process as SystemProcess;
 
-class Process
+class Process implements Pausable, Restartable, Terminable
 {
     private SystemProcess $systemProcess;
     private string $uuid;
@@ -39,7 +42,7 @@ class Process
         $this->restart();
     }
 
-    protected function restart(): void
+    public function restart(): void
     {
         if ($this->systemProcess->isStarted()) {
             event(new WorkerProcessRestarting($this));
@@ -48,14 +51,9 @@ class Process
         $this->start();
     }
 
-    public function terminate(): void
+    public function terminate($status = 0): void
     {
-        if(defined('SIGTERM')) {
-            $this->sendSignal(SIGTERM);
-        } else {
-            call_user_func($this->output, null, 'Sigterm is not supported. Using stop() instead.');
-            $this->systemProcess->stop();
-        }
+        $this->sendSignal(SIGTERM);
     }
 
     public function stop(): void
@@ -83,6 +81,16 @@ class Process
         $this->systemProcess->start($this->output);
 
         return $this;
+    }
+
+    public function pause(): void
+    {
+        $this->sendSignal(SIGUSR2);
+    }
+
+    public function continue(): void
+    {
+        $this->sendSignal(SIGCONT);
     }
 
     protected function cooldown()

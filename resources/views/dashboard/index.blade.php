@@ -38,7 +38,7 @@
             <thead class="thead-dark">
             <tr>
                 <th scope="col" colspan="5">
-                    Supervisor {{ $supervisor->name }}
+                    Supervisor {{ $supervisor->getKey() }}
                 </th>
             </tr>
             </thead>

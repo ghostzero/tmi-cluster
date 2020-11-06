@@ -13,7 +13,7 @@ class TmiClusterTest extends TestCase
         /** @var Supervisor $supervisor */
         $supervisor = app(SupervisorRepository::class)->create([]);
 
-        self::assertStringStartsWith(gethostname(), $supervisor->model->name);
+        self::assertStringStartsWith(gethostname(), $supervisor->model->getKey());
 
         $supervisor->scale(2);
         $supervisor->loop();
