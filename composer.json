@@ -1,5 +1,4 @@
 {
-  "version": "1.1.0",
   "name": "ghostzero/tmi-cluster",
   "description": "Laravel package to create a tmi cluster.",
   "type": "library",
