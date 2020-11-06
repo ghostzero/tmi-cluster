@@ -6,13 +6,13 @@ use Closure;
 use GhostZero\Tmi\Client;
 use GhostZero\Tmi\ClientOptions;
 use GhostZero\Tmi\Events\Event;
+use GhostZero\Tmi\Events\Inspector\InspectorReadyEvent;
 use GhostZero\Tmi\Events\Twitch\MessageEvent;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
-use GhostZero\TmiCluster\Contracts\Signed;
 use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
@@ -112,14 +112,14 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
     private function registerEvents(): void
     {
-        $this->client->on('inspector', function (string $url) {
+        $this->client->on(InspectorReadyEvent::class, function (string $url) {
             call_user_func($this->output, null, 'Inspector ready! Visit: ' . $url);
         });
 
         $this->client->any(fn($e) => $this->event($e));
     }
 
-    private function event(Signed $event): void
+    private function event(Event $event): void
     {
         if ($event->signature() && !$this->lock->get('event:' . $event->signature(), 300)) {
             return;
