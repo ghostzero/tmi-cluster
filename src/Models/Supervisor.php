@@ -42,8 +42,6 @@ class Supervisor extends Model
 
     public function processes(): HasMany
     {
-        $this->morphInstanceTo()
-
         return $this->hasMany(SupervisorProcess::class);
     }
 
