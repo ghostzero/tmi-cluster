@@ -108,12 +108,16 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
             event(new PeriodicTimerCalled());
         });
+
+        $this->client->getLoop()->addPeriodicTimer(300, function () {
+            app(AutoCleanup::class)->cleanup($this);
+        });
     }
 
     private function registerEvents(): void
     {
         $this->client->on(InspectorReadyEvent::class, function (string $url) {
-            call_user_func($this->output, null, 'Inspector ready! Visit: ' . $url);
+            $this->log('Inspector ready! Visit: ' . $url);
         });
 
         $this->client->any(fn($e) => $this->event($e));
@@ -128,7 +132,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         try {
             event($event);
         } catch (Throwable $exception) {
-            call_user_func($this->output, null, $exception->getMessage());
+            $this->log($exception->getMessage());
             return;
         }
 
@@ -175,7 +179,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
     {
         $this->working = false;
 
-        call_user_func($this->output, null, 'Evacuate process...');
+        $this->log('Evacuate process...');
 
         // evacuate all current channels to a new process
         TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
@@ -185,7 +189,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
     protected function exit($status = 0): void
     {
-        call_user_func($this->output, null, "Got exit signal with code {$status}");
+        $this->log("Got exit signal with code {$status}");
 
         $this->exitProcess($status);
     }
@@ -203,7 +207,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             $this->metrics[self::METRIC_COMMAND_QUEUE_COMMANDS]++;
             switch ($command->command) {
                 case CommandQueue::COMMAND_TMI_WRITE:
-                    call_user_func($this->output, null, $command->options->raw_command);
+                    $this->log($command->options->raw_command);
                     $this->client->write($command->options->raw_command);
                     break;
                 case CommandQueue::COMMAND_TMI_JOIN:
@@ -215,8 +219,18 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
                 case CommandQueue::COMMAND_CLIENT_EXIT:
                     exit(0);
                 default:
-                    call_user_func($this->output, null, sprintf('Command %s not supported', $command->command));
+                    $this->log(sprintf('Command %s not supported', $command->command));
             }
         }
+    }
+
+    public function getClient(): Client
+    {
+        return $this->client;
+    }
+
+    public function log(string $message)
+    {
+        call_user_func($this->output, null, $message);
     }
 }

@@ -14,6 +14,7 @@ trait ServiceBindings
     public $serviceBindings = [
         // General services...
         AutoScale::class,
+        AutoCleanup::class,
         Contracts\ClusterClient::class => TmiClusterClient::class,
 
         // Repository services...
