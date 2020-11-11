@@ -24,5 +24,4 @@ The TMI Cluster is powered by the [PHP Twitch Messaging Interface](https://githu
 
 ## Official Documentation
 
-Our Documentation is currently still work in progress.
-
+You can view our official documentation [here](https://tmiphp.com/docs/tmi-cluster.html).
