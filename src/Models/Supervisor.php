@@ -5,7 +5,6 @@ namespace GhostZero\TmiCluster\Models;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
@@ -44,8 +43,6 @@ class Supervisor extends Model
     {
         return $this->hasMany(SupervisorProcess::class);
     }
-
-
 
 
 }

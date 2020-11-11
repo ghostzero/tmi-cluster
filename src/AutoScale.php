@@ -47,12 +47,6 @@ class AutoScale
             $averageUsage = $this->getCurrentAverageChannelUsage($channels);
             $nextUsage = $this->getNextAverageChannelUsage($channels);
 
-            $supervisor->output(null, vsprintf('AVG Current: %s, AVG Next: %s - %s', [
-                $averageUsage,
-                $nextUsage,
-                date('H:i:s')
-            ]));
-
             if ($this->shouldScaleOut($averageUsage)) {
                 $this->scaleOut($supervisor);
             } elseif ($this->shouldScaleIn($averageUsage)) {

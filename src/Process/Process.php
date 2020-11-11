@@ -14,7 +14,7 @@ use Symfony\Component\Process\Process as SystemProcess;
 
 class Process implements Pausable, Restartable, Terminable
 {
-    private SystemProcess $systemProcess;
+    public SystemProcess $systemProcess;
     private string $uuid;
     private Closure $output;
     private ?CarbonImmutable $restartAgainAt = null;
@@ -53,7 +53,7 @@ class Process implements Pausable, Restartable, Terminable
 
     public function terminate($status = 0): void
     {
-        $this->sendSignal(SIGTERM);
+        $this->sendSignal(SIGINT);
     }
 
     public function stop(): void
@@ -100,11 +100,11 @@ class Process implements Pausable, Restartable, Terminable
         }
 
         if ($this->restartAgainAt) {
-            $this->restartAgainAt = ! $this->systemProcess->isRunning()
+            $this->restartAgainAt = !$this->systemProcess->isRunning()
                 ? CarbonImmutable::now()->addMinute()
                 : null;
 
-            if (! $this->systemProcess->isRunning()) {
+            if (!$this->systemProcess->isRunning()) {
                 event(new UnableToLaunchProcess($this));
             }
         } else {

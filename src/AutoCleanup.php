@@ -9,6 +9,10 @@ class AutoCleanup
 {
     public function cleanup(TmiClusterClient $client)
     {
+        if (!$this->shouldCleanup()) {
+            return;
+        }
+
         $diff = $this->diff(new Collection($client->getClient()->getChannels()));
 
         foreach ($diff['join'] as $channel) {
@@ -18,9 +22,15 @@ class AutoCleanup
 
         foreach ($diff['part'] as $channel) {
             $client->log(sprintf('Auto Cleanup: Part %s', $channel));
-            $client->getClient()->join($channel);
+            $client->getClient()->part($channel);
         }
 
+        $client->log(sprintf('Cleanup complete! Join: %s, Part: %s', count($diff['join']), count($diff['part'])));
+    }
+
+    private function shouldCleanup()
+    {
+        return config('tmi-cluster.auto_cleanup.enabled');
     }
 
     private function diff(Collection $collection)
@@ -37,7 +47,7 @@ class AutoCleanup
         $needJoin = array_diff($onlineChannelsArray, $connectedChannelsArray);
 
         return [
-            'connected' => $connectedChannels,
+            'connected' => $connectedChannelsArray,
             'join' => array_values($needJoin),
             'part' => array_values($needPart),
         ];
@@ -48,7 +58,7 @@ class AutoCleanup
         return $connectedChannels
             ->chunk(100)
             ->map(function (Collection $collection) use ($twitch) {
-                $result = $twitch->getStreamsByUserNames($collection->toArray());
+                $result = $twitch->getStreams(['user_login' => $collection->toArray()]);
 
                 abort_unless($result->success(), 503, $result->error());
 

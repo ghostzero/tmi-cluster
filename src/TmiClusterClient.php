@@ -25,6 +25,7 @@ use Throwable;
  *  3 - ModelNotFoundException: Server started with unknown uuid.
  *  4 - ModelNotFoundException: Someone killed the model.
  *  5 - IRC Client disconnected.
+ *  5 - Exit via CommandQueue.
  *
  * Class TmiClusterClient
  * @package GhostZero\TmiCluster
@@ -60,7 +61,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         try {
             $this->model = SupervisorProcess::query()->whereKey($options->getUuid())->firstOrFail();
         } catch (ModelNotFoundException $exception) {
-            $this->exit(3);
+            $this->terminate(3);
         }
 
         $this->commandQueue = app(CommandQueue::class);
@@ -99,17 +100,17 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             try {
                 $this->model->save();
             } catch (ModelNotFoundException $e) {
-                $this->exit(4);
+                $this->terminate(4);
             }
 
             if (!$this->client->isConnected() && !$this->client->getOptions()->shouldReconnect()) {
-                $this->exit(5);
+                $this->terminate(5);
             }
 
             event(new PeriodicTimerCalled());
         });
 
-        $this->client->getLoop()->addPeriodicTimer(300, function () {
+        $this->client->getLoop()->addPeriodicTimer(config('tmi-cluster.auto_cleanup.interval'), function () {
             app(AutoCleanup::class)->cleanup($this);
         });
     }
@@ -179,10 +180,9 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
     {
         $this->working = false;
 
-        $this->log('Evacuate process...');
-
         // evacuate all current channels to a new process
-        TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
+        $result = TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
+        $this->log(sprintf('TMI Client evacuated! Lost: %s, Migrated: %s', count($result['lost']), count($result['migrated'])));
 
         $this->exit($status);
     }
@@ -217,7 +217,8 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
                     $this->client->part($command->options->channel);
                     break;
                 case CommandQueue::COMMAND_CLIENT_EXIT:
-                    exit(0);
+                    $this->terminate(6);
+                    break;
                 default:
                     $this->log(sprintf('Command %s not supported', $command->command));
             }

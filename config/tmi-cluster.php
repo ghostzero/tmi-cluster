@@ -30,11 +30,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | TMI Cluster Redis Prefix
+    | TMI Cluster Fast Termination
     |--------------------------------------------------------------------------
     |
     | Here you may specify if the supervisor should wait for all its processes
     | to terminate. We recommend to wait before terminate the supervisor.
+    |
+    | On Docker we have bad experience with the shutdown handler. So there we
+    | recommend a fast termination. This will skip the evacuation.
     |
     */
 
@@ -85,5 +88,23 @@ return [
             'scale_in' => 50,
             'scale_out' => 70,
         ],
-    ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Auto Cleanup
+    |--------------------------------------------------------------------------
+    |
+    | The Auto Cleanup automatically parts channels that are offline. This
+    | feature uses the romanzipp/laravel-twitch library, please configure
+    | your Laravel project. Before you enable this function.
+    |
+    | See: https://github.com/romanzipp/Laravel-Twitch
+    |
+    */
+    'auto_cleanup' => [
+        'enabled' => false,
+        'interval' => 300,
+    ],
+
 ];

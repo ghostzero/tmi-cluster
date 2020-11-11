@@ -13,6 +13,6 @@ class PhpBinary
     {
         $escape = '\\' === DIRECTORY_SEPARATOR ? '"' : '\'';
 
-        return $escape.PHP_BINARY.$escape;
+        return $escape . PHP_BINARY . $escape;
     }
 }

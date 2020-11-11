@@ -25,10 +25,11 @@ trait TmiClusterHelpers
      * @param array $staleIds a list of supervisors or processes ids, that needs to be avoid
      * @param bool $throwNotFoundException
      */
-    public static function joinNextServer(array $channels, array $staleIds = [], bool $throwNotFoundException = false): void
+    public static function joinNextServer(array $channels, array $staleIds = [], bool $throwNotFoundException = false): array
     {
         /** @var CommandQueue $commandQueue */
         $commandQueue = app(CommandQueue::class);
+        $result = ['lost' => [], 'migrated' => []];
 
         $supervisors = Supervisor::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(10))
@@ -51,22 +52,29 @@ trait TmiClusterHelpers
             // we didn't get any server, that is ready to join our channels
             // so we move them to our lost and found channel queue
             $commandQueue->push(CommandQueue::NAME_LOST_AND_FOUND, CommandQueue::COMMAND_TMI_JOIN, [
-                'type' => 'channels',
                 'channels' => $channels,
+                'staleIds' => $staleIds,
             ]);
+
+            $result['lost'] = $channels;
+
+            return $result;
         }
 
         foreach ($channels as $channel) {
-            $supervisors = $supervisors->sortBy('channels');
-            $nextSupervisor = $supervisors->shift();
+            $nextSupervisor = $supervisors->sortBy('channels')->shift();
             $nextSupervisor['channels'] += 1;
             $supervisors->push($nextSupervisor);
 
             $commandQueue->push($nextSupervisor['name'], CommandQueue::COMMAND_TMI_JOIN, [
                 'channel' => $channel,
-                'stale_ids' => $staleIds,
+                'staleIds' => $staleIds,
             ]);
+
+            $result['migrated'][$channel] = $nextSupervisor['name'];
         }
+
+        return $result;
     }
 
     private static function channelName(string $channel): string

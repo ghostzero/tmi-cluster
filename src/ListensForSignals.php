@@ -22,6 +22,10 @@ trait ListensForSignals
     {
         pcntl_async_signals(true);
 
+        pcntl_signal(SIGINT, function () {
+            $this->pendingSignals['terminate'] = 'terminate';
+        });
+
         pcntl_signal(SIGTERM, function () {
             $this->pendingSignals['terminate'] = 'terminate';
         });

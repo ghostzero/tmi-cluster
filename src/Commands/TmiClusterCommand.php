@@ -1,5 +1,7 @@
 <?php
 
+declare(ticks=1);
+
 namespace GhostZero\TmiCluster\Commands;
 
 use DomainException;

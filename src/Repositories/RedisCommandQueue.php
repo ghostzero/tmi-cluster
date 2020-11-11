@@ -35,7 +35,7 @@ class RedisCommandQueue implements CommandQueue
      */
     public function push(string $name, string $command, array $options = [])
     {
-        $this->connection()->rpush('commands:'.$name, json_encode([
+        $this->connection()->rpush('commands:' . $name, json_encode([
             'command' => $command,
             'options' => $options,
             'time' => microtime(),
@@ -47,16 +47,16 @@ class RedisCommandQueue implements CommandQueue
      */
     public function pending(string $name): array
     {
-        $length = $this->connection()->llen('commands:'.$name);
+        $length = $this->connection()->llen('commands:' . $name);
 
         if ($length < 1) {
             return [];
         }
 
         $results = $this->connection()->pipeline(function ($pipe) use ($name, $length) {
-            $pipe->lrange('commands:'.$name, 0, $length - 1);
+            $pipe->lrange('commands:' . $name, 0, $length - 1);
 
-            $pipe->ltrim('commands:'.$name, $length, -1);
+            $pipe->ltrim('commands:' . $name, $length, -1);
         });
 
         return collect($results[0])->map(function ($result) {
@@ -69,7 +69,7 @@ class RedisCommandQueue implements CommandQueue
      */
     public function flush(string $name): void
     {
-        $this->connection()->del('commands:'.$name);
+        $this->connection()->del('commands:' . $name);
     }
 
     /**

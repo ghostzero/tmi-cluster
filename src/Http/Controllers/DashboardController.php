@@ -16,7 +16,7 @@ class DashboardController extends Controller
             'messages' => $supervisors
                 ->sum(function (Supervisor $supervisor) {
                     return $supervisor->processes->sum(function (SupervisorProcess $process) {
-                        return 0;
+                        return $process->metrics['irc_messages'] ?? 0;
                     });
                 }),
             'channels' => $supervisors
@@ -24,7 +24,7 @@ class DashboardController extends Controller
                     return $supervisor->processes->sum(function (SupervisorProcess $process) {
                         return count($process->channels);
                     });
-            }),
+                }),
             'processes' => $supervisors
                 ->sum(fn(Supervisor $supervisor) => count($supervisor->processes)),
         ]);

@@ -178,7 +178,7 @@ class Supervisor implements Pausable, Restartable, Terminable
 
     protected function shouldWait()
     {
-        return config('tmi-cluster.fast_termination');
+        return !config('tmi-cluster.fast_termination');
     }
 
     protected function exit($status = 0)
@@ -188,12 +188,13 @@ class Supervisor implements Pausable, Restartable, Terminable
 
     protected function exitProcess($status = 0)
     {
-        exit((int) $status);
+        exit((int)$status);
     }
 
     private function processPendingCommands(): void
     {
         $commands = $this->commandQueue->pending($this->model->getKey());
+        $channelsToJoin = [];
 
         foreach ($commands as $command) {
             switch ($command->command) {
@@ -204,9 +205,13 @@ class Supervisor implements Pausable, Restartable, Terminable
                     $this->autoScale->scaleIn($this);
                     break;
                 case CommandQueue::COMMAND_TMI_JOIN:
-                    $this->joinHandler->join($this, $command->options->channel);
+                    $channelsToJoin[] = $command->options->channel;
                     break;
             }
+        }
+
+        if (!empty($channelsToJoin)) {
+            $this->joinHandler->join($this, $channelsToJoin);
         }
     }
 }

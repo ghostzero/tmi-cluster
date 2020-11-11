@@ -17,6 +17,9 @@ use Symfony\Component\Process\Process as SystemProcess;
 
 class ProcessPool implements Countable, Pausable, Restartable, Terminable
 {
+    /**
+     * @var Process[]
+     */
     private array $processes = [];
     private array $terminatingProcesses = [];
     private ProcessOptions $options;
@@ -47,8 +50,8 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
 
     public function runningProcesses(): Collection
     {
-        return $this->processes()->filter(function ($process) {
-            return $process->process->isRunning();
+        return $this->processes()->filter(function (Process $process) {
+            return $process->systemProcess->isRunning();
         });
     }
 

@@ -34,7 +34,6 @@ class TmiClusterProcessCommand extends Command
      */
     public function handle(): int
     {
-        $this->info('handle');
         TmiClusterClient::make($this->clusterClientOptions(), function ($type, $line) {
             $this->info($line);
         })->connect();

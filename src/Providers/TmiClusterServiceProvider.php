@@ -26,6 +26,7 @@ class TmiClusterServiceProvider extends ServiceProvider
         $this->registerServices();
         $this->registerCommands();
         $this->registerResources();
+        $this->registerLogger();
     }
 
     protected function registerEvents(): void
@@ -96,6 +97,10 @@ class TmiClusterServiceProvider extends ServiceProvider
      */
     private function registerResources(): void
     {
-        $this->loadViewsFrom(__DIR__.'/../../resources/views', 'tmi-cluster');
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'tmi-cluster');
+    }
+
+    private function registerLogger(): void
+    {
     }
 }

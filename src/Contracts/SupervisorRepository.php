@@ -3,8 +3,8 @@
 namespace GhostZero\TmiCluster\Contracts;
 
 use Exception;
-use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Models;
+use GhostZero\TmiCluster\Supervisor;
 use Illuminate\Support\Collection;
 
 interface SupervisorRepository

@@ -5,9 +5,9 @@ namespace GhostZero\TmiCluster\Repositories;
 use DomainException;
 use Exception;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository as Repository;
+use GhostZero\TmiCluster\JoinHandler;
 use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\Supervisor;
-use GhostZero\TmiCluster\TmiCluster;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -65,7 +65,7 @@ class SupervisorRepository implements Repository
             }
         });
 
-        TmiCluster::joinNextServer($channels, $staleIds);
+        app(JoinHandler::class)->joinLostChannels($channels, $staleIds);
     }
 
     private function deleteStaleProcess($process): void
