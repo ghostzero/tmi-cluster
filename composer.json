@@ -21,7 +21,7 @@
   },
   "require": {
     "php": "^7.4",
-    "ghostzero/tmi": "2.0.0-rc.2",
+    "ghostzero/tmi": "2.0.0-rc.3",
     "illuminate/support": "^8.1",
     "illuminate/console": "^8.1",
     "predis/predis": "^1.1",
