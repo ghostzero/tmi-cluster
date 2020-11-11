@@ -61,7 +61,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         try {
             $this->model = SupervisorProcess::query()->whereKey($options->getUuid())->firstOrFail();
         } catch (ModelNotFoundException $exception) {
-            $this->terminate(3);
+            $this->exit(3);
         }
 
         $this->commandQueue = app(CommandQueue::class);
