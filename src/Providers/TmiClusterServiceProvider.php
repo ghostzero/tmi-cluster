@@ -22,10 +22,12 @@ class TmiClusterServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configure();
+        $this->offerPublishing();
         $this->registerEvents();
         $this->registerServices();
         $this->registerCommands();
-        $this->registerResources();
+        $this->registerFrontend();
+        $this->defineAssetPublishing();
         $this->registerLogger();
     }
 
@@ -50,10 +52,6 @@ class TmiClusterServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../../config/tmi-cluster.php', 'tmi-cluster');
         $this->loadMigrationsFrom(__DIR__ . '/../../migrations');
-
-        $this->publishes([
-            __DIR__ . '/../../config/tmi-cluster.php' => config_path('tmi-cluster.php'),
-        ]);
 
         TmiCluster::use(config('tmi-cluster.use'));
     }
@@ -95,12 +93,28 @@ class TmiClusterServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    private function registerResources(): void
+    private function registerFrontend(): void
     {
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'tmi-cluster');
     }
 
     private function registerLogger(): void
     {
+    }
+
+    private function offerPublishing(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../../config/tmi-cluster.php' => config_path('tmi-cluster.php'),
+            ], 'tmi-cluster-config');
+        }
+    }
+
+    private function defineAssetPublishing(): void
+    {
+        $this->publishes([
+            __DIR__ . '/../../public' => public_path('vendor/tmi-cluster')
+        ], 'tmi-cluster-assets');
     }
 }

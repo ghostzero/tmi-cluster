@@ -9,11 +9,16 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        return view('tmi-cluster::dashboard.index');
+    }
+
+    public function statistics(): array
+    {
         $supervisors = Supervisor::query()->get();
 
-        return view('tmi-cluster::dashboard.index', [
+        return [
             'supervisors' => $supervisors,
-            'messages' => $supervisors
+            'irc_messages' => $supervisors
                 ->sum(function (Supervisor $supervisor) {
                     return $supervisor->processes->sum(function (SupervisorProcess $process) {
                         return $process->metrics['irc_messages'] ?? 0;
@@ -22,11 +27,11 @@ class DashboardController extends Controller
             'channels' => $supervisors
                 ->sum(function (Supervisor $supervisor) {
                     return $supervisor->processes->sum(function (SupervisorProcess $process) {
-                        return count($process->channels);
+                        return $process->metrics['channels'] ?? 0;
                     });
                 }),
             'processes' => $supervisors
                 ->sum(fn(Supervisor $supervisor) => count($supervisor->processes)),
-        ]);
+        ];
     }
 }
