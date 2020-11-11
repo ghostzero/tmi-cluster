@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster;
 
 use Closure;
+use Exception;
 use GhostZero\Tmi\Client;
 use GhostZero\Tmi\ClientOptions;
 use GhostZero\Tmi\Events\Event;
@@ -111,7 +112,11 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         });
 
         $this->client->getLoop()->addPeriodicTimer(config('tmi-cluster.auto_cleanup.interval'), function () {
-            app(AutoCleanup::class)->cleanup($this);
+            try {
+                app(AutoCleanup::class)->cleanup($this);
+            } catch (Exception $e) {
+                $this->log($e->getMessage());
+            }
         });
     }
 
