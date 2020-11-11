@@ -13,4 +13,5 @@ let mix = require('laravel-mix');
 
 mix.js('resources/js/tmi-cluster.js', 'public')
     .sass('resources/scss/tmi-cluster.scss', 'public')
-    .setPublicPath('public');
+    .setPublicPath('public')
+    .version();

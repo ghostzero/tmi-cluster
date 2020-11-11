@@ -4,6 +4,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | TMI Cluster Domain
+    |--------------------------------------------------------------------------
+    |
+    | This is the subdomain where TMI Cluster will be accessible from. If this
+    | setting is null, TMI Cluster will reside under the same domain as the
+    | application. Otherwise, this value will serve as the subdomain.
+    |
+    */
+
+    'domain' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Path
+    |--------------------------------------------------------------------------
+    |
+    | This is the URI path where TMI Cluster will be accessible from. Feel free
+    | to change this path to anything you like. Note that the URI will not
+    | affect the paths of its internal API that aren't exposed to users.
+    |
+    */
+
+    'path' => 'tmi-cluster',
+
+    /*
+    |--------------------------------------------------------------------------
     | TMI Cluster Redis Connection
     |--------------------------------------------------------------------------
     |
@@ -102,6 +128,7 @@ return [
     | See: https://github.com/romanzipp/Laravel-Twitch
     |
     */
+
     'auto_cleanup' => [
         'enabled' => false,
         'interval' => 300,

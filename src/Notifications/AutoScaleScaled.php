@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster\Notifications;
 
+use GhostZero\TmiCluster\TmiCluster;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\NexmoMessage;
 use Illuminate\Notifications\Messages\SlackMessage;
@@ -50,8 +51,8 @@ class AutoScaleScaled extends Notification
     {
         return (new SlackMessage)
             ->from('TMI Cluster')
-            ->to(Horizon::$slackChannel)
-            //->image('... add horizon url')
+            ->to(TmiCluster::$slackChannel)
+            //->image('... add tmi cluster image url')
             ->error()
             ->content('Oh no! Something needs your attention.')
             ->attachment(function ($attachment) {

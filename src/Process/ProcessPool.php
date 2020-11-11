@@ -154,7 +154,7 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
     protected function createProcess(): Process
     {
         /** @var SystemProcess $class */
-        $class = config('horizon.fast_termination')
+        $class = config('tmi_cluster.fast_termination')
             ? BackgroundProcess::class
             : SystemProcess::class;
 

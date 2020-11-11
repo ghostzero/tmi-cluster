@@ -84,6 +84,7 @@ class TmiClusterServiceProvider extends ServiceProvider
                 Commands\TmiClusterJoinCommand::class,
                 Commands\TmiClusterProcessCommand::class,
                 Commands\TmiClusterPurgeCommand::class,
+                Commands\TmiClusterInstallCommand::class,
             ]);
         }
     }

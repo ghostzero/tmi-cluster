@@ -70,10 +70,11 @@ class TmiCluster
     {
         Route::group([
             'domain' => config('tmi-cluster.domain', null),
-            'prefix' => config('tmi-cluster.path'),
+            'prefix' => config('tmi-cluster.path', 'tmi-cluster'),
             'middleware' => config('tmi-cluster.middleware', 'web'),
         ], function () {
             Route::get('', [Controllers\DashboardController::class, 'index']);
+            Route::post('statistics', [Controllers\DashboardController::class, 'statistics']);
             Route::get('statistics', [Controllers\DashboardController::class, 'statistics']);
             Route::get('metrics', [Controllers\MetricsController::class, 'handle']);
         });
