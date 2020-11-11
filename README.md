@@ -1,6 +1,6 @@
 # TMI Cluster for Laravel
 
-> **Project Status**: This project is still in an early stage. Please do not put this software into production yet, as the APIs are subject to change. Everyone is welcome to contribute to this project.
+> **Project Status**: This project is still in an early stage. We are slowly approaching a production ready release candidate. Please do not put this software into production yet, as the APIs are subject to change. Everyone is welcome to contribute to this project.
 
 <p align="center">
   <img height="400" src="https://fa-cdn.bitinflow.com/images/chrome_2020-10-12_17-53-36.png">
