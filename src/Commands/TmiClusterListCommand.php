@@ -52,7 +52,7 @@ class TmiClusterListCommand extends Command
             ->map(function (SupervisorProcess $row) {
                 return [
                     $row->getKey(),
-                    $row->supervisor->getKey(),
+                    $row->supervisor ? $row->supervisor->getKey() : 'N/A',
                     $row->state,
                     $row->last_ping_at ? $row->last_ping_at->diffInSeconds() : 'N/A',
                     count($row->channels),

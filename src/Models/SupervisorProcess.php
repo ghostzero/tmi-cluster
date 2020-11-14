@@ -43,6 +43,7 @@ class SupervisorProcess extends Model
 
     public function getIsStaleAttribute(): bool
     {
-        return $this->last_ping_at->diffInSeconds() >= 30;
+        // we require at least 60 seconds for our restart cooldown
+        return $this->last_ping_at->diffInSeconds() >= 90;
     }
 }
