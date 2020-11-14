@@ -42,6 +42,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
     private CommandQueue $commandQueue;
     private Closure $output;
     private Lock $lock;
+    private AutoCleanup $autoCleanup;
 
     private const METRIC_IRC_MESSAGES = 'irc_messages';
     private const METRIC_IRC_COMMANDS = 'irc_commands';
@@ -58,6 +59,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         $this->output = $output;
         $this->options = $options;
         $this->lock = app(Lock::class);
+        $this->autoCleanup = app(AutoCleanup::class);
 
         try {
             $this->model = SupervisorProcess::query()->whereKey($options->getUuid())->firstOrFail();
@@ -113,7 +115,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
         $this->client->getLoop()->addPeriodicTimer(config('tmi-cluster.auto_cleanup.interval'), function () {
             try {
-                app(AutoCleanup::class)->cleanup($this);
+                $this->autoCleanup->cleanup($this);
             } catch (Exception $e) {
                 $this->log($e->getMessage());
             }
@@ -216,6 +218,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
                     $this->client->write($command->options->raw_command);
                     break;
                 case CommandQueue::COMMAND_TMI_JOIN:
+                    $this->autoCleanup->acquireLock($this, $command->options->channel);
                     $this->client->join($command->options->channel);
                     break;
                 case CommandQueue::COMMAND_TMI_PART:
@@ -238,5 +241,10 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
     public function log(string $message)
     {
         call_user_func($this->output, null, $message);
+    }
+
+    public function getUuid()
+    {
+        return $this->model->getKey();
     }
 }

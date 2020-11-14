@@ -7,6 +7,13 @@ use romanzipp\Twitch\Twitch;
 
 class AutoCleanup
 {
+    private Lock $lock;
+
+    public function __construct()
+    {
+        $this->lock = app(Lock::class);
+    }
+
     public function cleanup(TmiClusterClient $client)
     {
         if (!$this->shouldCleanup()) {
@@ -21,11 +28,21 @@ class AutoCleanup
         }
 
         foreach ($diff['part'] as $channel) {
-            $client->log(sprintf('Auto Cleanup: Part %s', $channel));
+            if ($this->lock->exists($this->getKey($client, $channel))) {
+                $client->log(sprintf('Auto Cleanup: Part is locked for %s', $channel));
+                return;
+            } else {
+                $client->log(sprintf('Auto Cleanup: Part %s', $channel));
+            }
             $client->getClient()->part($channel);
         }
 
         $client->log(sprintf('Cleanup complete! Join: %s, Part: %s', count($diff['join']), count($diff['part'])));
+    }
+
+    public function acquireLock(TmiClusterClient $client, string $channel): void
+    {
+        $this->lock->get($this->getKey($client, $channel), 300);
     }
 
     private function shouldCleanup()
@@ -66,5 +83,10 @@ class AutoCleanup
                     ->map(fn($x) => strtolower($x->user_name));
             })
             ->collapse();
+    }
+
+    private function getKey(TmiClusterClient $client, string $channel): string
+    {
+        return sprintf('auto-cleanup:part-%s-%s', $client->getUuid(), $channel);
     }
 }
