@@ -187,8 +187,6 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
     {
         $this->working = false;
 
-        $this->model->forceDelete();
-
         // evacuate all current channels to a new process
         $result = TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
         $this->log(sprintf('TMI Client evacuated! Lost: %s, Migrated: %s', count($result['lost']), count($result['migrated'])));
