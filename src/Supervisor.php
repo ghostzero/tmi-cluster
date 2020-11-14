@@ -173,7 +173,7 @@ class Supervisor implements Pausable, Restartable, Terminable
         }
 
         // cleanup database before the clean stale process kills our models
-        $this->model->processes()->each(fn(SupervisorProcess $process) => $process->forceDelete());
+        $this->model->processes()->forceDelete();
         $this->model->forceDelete();
 
         $this->exit($status);
