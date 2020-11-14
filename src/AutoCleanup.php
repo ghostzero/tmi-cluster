@@ -31,9 +31,9 @@ class AutoCleanup
             if ($this->lock->exists($this->getKey($client, $channel))) {
                 $client->log(sprintf('Auto Cleanup: Part is locked for %s', $channel));
                 return;
-            } else {
-                $client->log(sprintf('Auto Cleanup: Part %s', $channel));
             }
+
+            $client->log(sprintf('Auto Cleanup: Part %s', $channel));
             $client->getClient()->part($channel);
         }
 
