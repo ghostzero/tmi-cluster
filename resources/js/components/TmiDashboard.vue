@@ -1,15 +1,23 @@
 <template>
     <div v-if="statistics">
         <div class="row">
-            <div class="col-4">
-                <div class="card text-white bg-info mb-3">
+            <div class="col-12 col-md-3">
+                <div class="card text-white bg-primary mb-3">
                     <div class="card-body">
                         <h4 class="card-title">{{ statistics.irc_messages_per_second }}</h4>
                         <h5 class="card-text">Messages/s</h5>
                     </div>
                 </div>
             </div>
-            <div class="col-4">
+            <div class="col-12 col-md-3">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ statistics.irc_commands_per_second }}</h4>
+                        <h5 class="card-text">Commands/s</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
                 <div class="card text-white bg-warning mb-3">
                     <div class="card-body">
                         <h4 class="card-title">{{ statistics.channels }}</h4>
@@ -17,7 +25,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-4">
+            <div class="col-12 col-md-3">
                 <div class="card text-white bg-danger mb-3">
                     <div class="card-body">
                         <h4 class="card-title">{{ statistics.processes }}</h4>
@@ -78,7 +86,6 @@ export default {
 
     mounted() {
         this.updateStatistics();
-        setInterval(this.updateStatistics, 2000);
     },
 
     methods: {
@@ -87,6 +94,7 @@ export default {
                 .post(this.statisticsUrl, this.statistics)
                 .then(response => response.data)
                 .then(data => this.statistics = data)
+                .then(() => setTimeout(this.updateStatistics, 2500))
                 .catch(error => console.error(error));
         }
     }

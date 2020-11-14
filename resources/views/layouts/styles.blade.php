@@ -46,7 +46,7 @@
 
     .dashboard {
         width: 100%;
-        max-width: 820px;
+        max-width: 1024px;
         padding: 15px;
         margin: auto;
     }
