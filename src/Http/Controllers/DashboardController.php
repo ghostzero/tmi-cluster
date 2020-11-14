@@ -45,7 +45,8 @@ class DashboardController extends Controller
             'time' => $time,
             'supervisors' => $supervisors,
             'irc_messages' => $ircMessages,
-            'irc_messages_per_second' => $this->getDataPerSecond($request, 'irc_messaged', $ircMessages, $time),
+            'irc_commands' => $ircCommands,
+            'irc_messages_per_second' => $this->getDataPerSecond($request, 'irc_messages', $ircMessages, $time),
             'irc_commands_per_second' => $this->getDataPerSecond($request, 'irc_commands', $ircCommands, $time),
             'channels' => $supervisors
                 ->sum(function (Supervisor $supervisor) {
