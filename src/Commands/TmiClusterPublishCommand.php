@@ -4,7 +4,7 @@ namespace GhostZero\TmiCluster\Commands;
 
 use Illuminate\Console\Command;
 
-class TmiClusterInstallCommand extends Command
+class TmiClusterPublishCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -18,7 +18,7 @@ class TmiClusterInstallCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Install all TMI Cluster assets & configurations';
+    protected $description = 'Publish all TMI Cluster assets';
 
     /**
      * Execute the console command.
@@ -30,9 +30,6 @@ class TmiClusterInstallCommand extends Command
         $this->comment('Publishing TMI Cluster assets...');
         $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-assets', '--force' => true]);
 
-        $this->comment('Publishing TMI Cluster configuration...');
-        $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-config']);
-
-        $this->info('TMI Cluster scaffolding installed successfully.');
+        $this->info('TMI Cluster assets published successfully.');
     }
 }
