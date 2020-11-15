@@ -5,15 +5,15 @@
                 <div class="card text-white bg-primary mb-3">
                     <div class="card-body">
                         <h4 class="card-title">{{ statistics.irc_messages_per_second }}</h4>
-                        <h5 class="card-text">Messages/s</h5>
+                        <h5 class="card-text">IRC Messages/s</h5>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-md-3">
-                <div class="card text-white bg-info mb-3">
+                <div class="card text-white bg-success mb-3">
                     <div class="card-body">
                         <h4 class="card-title">{{ statistics.irc_commands_per_second }}</h4>
-                        <h5 class="card-text">Commands/s</h5>
+                        <h5 class="card-text">IRC Commands/s</h5>
                     </div>
                 </div>
             </div>

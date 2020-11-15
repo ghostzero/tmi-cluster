@@ -1,0 +1,49 @@
+
+
+
+html,
+body {
+  height: 100%;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  /* Read next point */
+  unicode-range: U+000-5FF; /* Download only latin glyphs */
+  src: local('JetBrains Mono'),
+  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
+  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Extra Bold';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  /* Read next point */
+  unicode-range: U+000-5FF; /* Download only latin glyphs */
+  src: local('JetBrains Mono Extra Bold'),
+  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2') format('woff2'),
+  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff') format('woff');
+}
+
+body {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #f5f5f5;
+  font-family: "JetBrains Mono", sans-serif;
+}
+
+.dashboard {
+  width: 100%;
+  max-width: 1024px;
+  padding: 15px;
+  margin: auto;
+}
