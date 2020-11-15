@@ -11,7 +11,7 @@ class TmiClusterPublishCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tmi-cluster:install';
+    protected $signature = 'tmi-cluster:publish';
 
     /**
      * The console command description.
