@@ -8,6 +8,7 @@ use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
+use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Process\Process;
 use GhostZero\TmiCluster\Process\ProcessOptions;
 use GhostZero\TmiCluster\Process\ProcessPool;
@@ -159,8 +160,6 @@ class Supervisor implements Pausable, Restartable, Terminable
         // We will mark this supervisor as terminating so that any user interface can
         // correctly show the supervisor's status. Then, we will scale the process
         // pools down to zero workers to gracefully terminate them all out here.
-        $this->model->forceDelete();
-
         $this->pools()->each(function (ProcessPool $pool) {
             $pool->processes()->each(function (Process $process) {
                 $process->terminate();
@@ -172,6 +171,10 @@ class Supervisor implements Pausable, Restartable, Terminable
                 sleep(1);
             }
         }
+
+        // cleanup database before the clean stale process kills our models
+        $this->model->processes()->forceDelete();
+        $this->model->forceDelete();
 
         $this->exit($status);
     }
