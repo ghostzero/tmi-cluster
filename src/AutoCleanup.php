@@ -62,7 +62,7 @@ class AutoCleanup
     private static function getOnlineChannels(array $connectedChannels, Twitch $twitch): array
     {
         return array_map(static function (array $collection) use ($twitch) {
-            $result = $twitch->getStreams(['user_login' => $collection->toArray()]);
+            $result = $twitch->getStreams(['user_login' => $collection]);
 
             abort_unless($result->success(), 503, $result->error());
 
