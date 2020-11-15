@@ -250,6 +250,6 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
     private function getCleanupInterval(): int
     {
-        return config('tmi-cluster.auto_cleanup.interval', 300) + random_int(0, 60);
+        return config('tmi-cluster.auto_cleanup.interval', 300) + random_int(0, 600);
     }
 }
