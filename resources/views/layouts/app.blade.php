@@ -9,7 +9,7 @@
     @stack('tmi-cluster::meta')
 
     <link rel="canonical" href="{{ request()->url() }}">
-    <link rel="icon" type="image/x-icon" href="{{ asset(mix('favicon.ico', 'vendor/tmi-cluster')) }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('vendor/tmi-cluster/favicon.ico') }}">
 
     <!-- Fonts & Core CSS -->
     <link href="https://fa-cdn.bitinflow.com/releases/v5.13.0/css/all.min.css" rel="stylesheet"
