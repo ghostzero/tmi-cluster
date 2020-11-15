@@ -32,10 +32,12 @@ class DashboardController extends Controller
             });
 
         $supervisors->map(function (Supervisor $supervisor) {
-            $supervisor->processes->transform(function (SupervisorProcess $supervisor) {
-                $supervisor->id_short = explode('-', $supervisor->getKey())[0];
-                $supervisor->last_ping_at_in_seconds = $supervisor->last_ping_at->diffInSeconds();
-                return $supervisor;
+            $tokens = explode('-', $supervisor->getKey());
+            $supervisor->id_short = $tokens[count($tokens) - 1];
+            $supervisor->processes->transform(function (SupervisorProcess $process) {
+                $process->id_short = explode('-', $process->getKey())[0];
+                $process->last_ping_at_in_seconds = $process->last_ping_at->diffInSeconds();
+                return $process;
             });
         });
 
