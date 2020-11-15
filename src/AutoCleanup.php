@@ -2,7 +2,6 @@
 
 namespace GhostZero\TmiCluster;
 
-use Illuminate\Support\Collection;
 use romanzipp\Twitch\Twitch;
 
 class AutoCleanup
@@ -20,12 +19,7 @@ class AutoCleanup
             return;
         }
 
-        $diff = $this->diff(new Collection($client->getClient()->getChannels()));
-
-        foreach ($diff['join'] as $channel) {
-            $client->log(sprintf('Auto Cleanup: Join %s', $channel));
-            $client->getClient()->join($channel);
-        }
+        $diff = static::diff($client->getClient()->getChannels());
 
         foreach ($diff['part'] as $channel) {
             if ($this->lock->exists($this->getKey($client, $channel))) {
@@ -50,39 +44,30 @@ class AutoCleanup
         return config('tmi-cluster.auto_cleanup.enabled');
     }
 
-    private function diff(Collection $collection): array
+    public static function diff(array $collection): array
     {
-        $connectedChannels = $collection->map(fn($data) => ltrim($data, '#'));
+        $connectedChannels = array_map(static fn($data) => ltrim($data, '#'), $collection);
+        $onlineChannels = self::getOnlineChannels($connectedChannels, app(Twitch::class));
 
-        $onlineChannelsArray = $this
-            ->getOnlineChannels($connectedChannels, app(Twitch::class))
-            ->toArray();
-
-        $connectedChannelsArray = $connectedChannels->toArray();
-
-        $needPart = array_diff($connectedChannelsArray, $onlineChannelsArray);
-        $needJoin = array_diff($onlineChannelsArray, $connectedChannelsArray);
+        $needPart = array_diff($connectedChannels, $onlineChannels);
+        $needJoin = array_diff($onlineChannels, $connectedChannels);
 
         return [
-            'connected' => $connectedChannelsArray,
+            'connected' => $connectedChannels,
             'join' => array_values($needJoin),
             'part' => array_values($needPart),
         ];
     }
 
-    private function getOnlineChannels(Collection $connectedChannels, Twitch $twitch): Collection
+    private static function getOnlineChannels(array $connectedChannels, Twitch $twitch): array
     {
-        return $connectedChannels
-            ->chunk(100)
-            ->map(function (Collection $collection) use ($twitch) {
-                $result = $twitch->getStreams(['user_login' => $collection->toArray()]);
+        return array_map(static function (array $collection) use ($twitch) {
+            $result = $twitch->getStreams(['user_login' => $collection->toArray()]);
 
-                abort_unless($result->success(), 503, $result->error());
+            abort_unless($result->success(), 503, $result->error());
 
-                return collect($result->data())
-                    ->map(fn($x) => strtolower($x->user_name));
-            })
-            ->collapse();
+            return array_map(static fn($x) => strtolower($x->user_name), $result->data());
+        }, array_chunk($connectedChannels, 100));
     }
 
     private function getKey(TmiClusterClient $client, string $channel): string
