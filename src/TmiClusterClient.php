@@ -113,7 +113,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             event(new PeriodicTimerCalled());
         });
 
-        $this->client->getLoop()->addPeriodicTimer(config('tmi-cluster.auto_cleanup.interval'), function () {
+        $this->client->getLoop()->addPeriodicTimer($this->getCleanupInterval(), function () {
             try {
                 $this->autoCleanup->cleanup($this);
             } catch (Exception $e) {
@@ -246,5 +246,10 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
     public function getUuid()
     {
         return $this->model->getKey();
+    }
+
+    private function getCleanupInterval(): int
+    {
+        return config('tmi-cluster.auto_cleanup.interval', 300) + random_int(0, 60);
     }
 }

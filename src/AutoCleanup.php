@@ -14,7 +14,7 @@ class AutoCleanup
         $this->lock = app(Lock::class);
     }
 
-    public function cleanup(TmiClusterClient $client)
+    public function cleanup(TmiClusterClient $client): void
     {
         if (!$this->shouldCleanup()) {
             return;
@@ -50,7 +50,7 @@ class AutoCleanup
         return config('tmi-cluster.auto_cleanup.enabled');
     }
 
-    private function diff(Collection $collection)
+    private function diff(Collection $collection): array
     {
         $connectedChannels = $collection->map(fn($data) => ltrim($data, '#'));
 
