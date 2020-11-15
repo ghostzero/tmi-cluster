@@ -5,35 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="René Preuß and TMI Cluster Contributors">
-    <title>Dashboard &bull; TMI Cluster</title>
+    <title>TMI Cluster</title>
     @stack('tmi-cluster::meta')
 
     <link rel="canonical" href="{{ request()->url() }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset(mix('favicon.ico', 'vendor/tmi-cluster')) }}">
 
-    <!-- Bootstrap core CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-    <link href="https://fa-cdn.bitinflow.com/releases/v5.13.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Fonts & Core CSS -->
+    <link href="https://fa-cdn.bitinflow.com/releases/v5.13.0/css/all.min.css" rel="stylesheet"
+          crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700;900&display=swap"
+          rel="stylesheet" crossorigin="anonymous">
+    <link rel="preload" as="font" href="https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2" type="font/woff2"
+          crossorigin="anonymous">
+    <link rel="preload" as="font" href="https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2" type="font/woff2"
+          crossorigin="anonymous">
     <link href="{{ asset(mix('tmi-cluster.css', 'vendor/tmi-cluster')) }}" rel="stylesheet">
 
     <!-- Theme -->
-    <meta name="theme-color" content="#343a40">
-
-    @include('tmi-cluster::layouts.styles')
+    <meta name="theme-color" content="#6d00ff">
 </head>
 <body>
-<div class="dashboard" id="app">
-    <h1 class="text-center mb-3" style="font-weight: 900;">TMI Cluster</h1>
-
+<div id="app">
     @yield('content')
 
-    <footer class="text-muted text-center">
+    <footer class="text-muted text-center mb-5">
         <small>
             Copyright &copy; {{ date('Y') }} René Preuß & Contributors
         </small>
     </footer>
 </div>
 
-<script src="{{asset(mix('tmi-cluster.js', 'vendor/tmi-cluster'))}}"></script>
+<script src="{{ asset(mix('tmi-cluster.js', 'vendor/tmi-cluster')) }}"></script>
 </body>
 </html>
