@@ -238,7 +238,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         return $this->client;
     }
 
-    public function log(string $message)
+    public function log(string $message): void
     {
         call_user_func($this->output, null, $message);
     }
