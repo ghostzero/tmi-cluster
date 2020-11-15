@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
 
 class TmiClusterInstallCommand extends Command
 {
@@ -29,7 +28,7 @@ class TmiClusterInstallCommand extends Command
     public function handle()
     {
         $this->comment('Publishing TMI Cluster Assets...');
-        $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-assets']);
+        $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-assets', '--force' => true]);
 
         $this->comment('Publishing TMI Cluster Configuration...');
         $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-config']);
