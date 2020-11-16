@@ -23,11 +23,6 @@ class AutoCleanup
         /** @var Twitch $twitch */
         $twitch = app(Twitch::class);
 
-        if (!$twitch->shouldFetchClientCredentials()) {
-            $client->log(sprintf('Auto Cleanup: No client credentials are given.'));
-            return;
-        }
-
         try {
             $diff = static::diff($twitch, $client->getClient()->getChannels());
         } catch (Throwable $exception) {
