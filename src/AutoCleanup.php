@@ -21,7 +21,11 @@ class AutoCleanup
 
         $diff = static::diff($client->getClient()->getChannels());
 
-        foreach ($diff['part'] as $channel) {
+        foreach ($diff['part'] as $channel => $login) {
+            if ($channel === null || $login == null) {
+                continue;
+            }
+
             if ($this->lock->exists($this->getKey($client, $channel))) {
                 $client->log(sprintf('Auto Cleanup: Part is locked for %s', $channel));
                 return;
@@ -31,7 +35,7 @@ class AutoCleanup
             $client->getClient()->part($channel);
         }
 
-        $client->log(sprintf('Cleanup complete! Join: %s, Part: %s', count($diff['join']), count($diff['part'])));
+        $client->log(sprintf('Cleanup complete! Part: %s', count($diff['part'])));
     }
 
     public function acquireLock(TmiClusterClient $client, string $channel): void
@@ -49,13 +53,10 @@ class AutoCleanup
         $connectedChannels = array_map(static fn($data) => ltrim($data, '#'), $collection);
         $onlineChannels = self::getOnlineChannels($connectedChannels, app(Twitch::class));
 
-        $needPart = array_diff($connectedChannels, $onlineChannels);
-        $needJoin = array_diff($onlineChannels, $connectedChannels);
-
         return [
             'connected' => $connectedChannels,
-            'join' => array_values($needJoin),
-            'part' => array_values($needPart),
+            'join' => array_diff($onlineChannels, $connectedChannels),
+            'part' => array_diff($connectedChannels, $onlineChannels),
         ];
     }
 

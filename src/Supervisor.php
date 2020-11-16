@@ -95,6 +95,7 @@ class Supervisor implements Pausable, Restartable, Terminable
             event(new SupervisorLooped($this));
         } catch (Throwable $e) {
             $this->output(null, $e->getMessage());
+            $this->output(null, $e->getTraceAsString());
             app(ExceptionHandler::class)->report($e);
         }
     }

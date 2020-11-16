@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster;
 
 use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\Process\Process;
 
 /**
@@ -49,7 +50,7 @@ class JoinHandler
         /** @var CommandQueue $commandQueue */
         $commandQueue = app(CommandQueue::class);
 
-        $commands = $commandQueue->pending(CommandQueue::NAME_LOST_AND_FOUND);
+        $commands = $commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
         foreach ($commands as $command) {
             if ($command->command !== CommandQueue::COMMAND_TMI_JOIN) {
@@ -60,6 +61,51 @@ class JoinHandler
             $channels = array_merge($channels, $command->options->channels);
         }
 
-        TmiCluster::joinNextServer(array_unique($channels), array_unique($staleIds));
+        $this->joinOrQueue(array_unique($channels), array_unique($staleIds), $commandQueue);
+    }
+
+    private function joinOrQueue(array $channels, array $staleIds, CommandQueue $commandQueue): array
+    {
+        $result = ['queued' => [], 'migrated' => []];
+
+        $supervisors = Models\Supervisor::query()
+            ->whereTime('last_ping_at', '>', now()->subSeconds(10))
+            ->whereNotIn('id', $staleIds)
+            ->get()->map(function (Models\Supervisor $supervisor) {
+                return [
+                    'name' => $supervisor->getKey(),
+                    'channels' => $supervisor->processes->sum(function (Models\SupervisorProcess $process) {
+                        return count($process->channels);
+                    }),
+                ];
+            })->sortBy('channels');
+
+        if ($supervisors->isEmpty()) {
+            // we didn't get any server, that is ready to join our channels
+            // so we move them to our lost and found channel queue
+            $commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
+                'channels' => $channels,
+                'staleIds' => $staleIds,
+            ]);
+
+            $result['queued'] = $channels;
+
+            return $result;
+        }
+
+        foreach ($channels as $channel) {
+            $nextSupervisor = $supervisors->sortBy('channels')->shift();
+            $nextSupervisor['channels'] += 1;
+            $supervisors->push($nextSupervisor);
+
+            $commandQueue->push($nextSupervisor['name'], CommandQueue::COMMAND_TMI_JOIN, [
+                'channel' => $channel,
+                'staleIds' => $staleIds,
+            ]);
+
+            $result['migrated'][$channel] = $nextSupervisor['name'];
+        }
+
+        return $result;
     }
 }

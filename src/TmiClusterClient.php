@@ -113,11 +113,15 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             event(new PeriodicTimerCalled());
         });
 
-        $this->client->getLoop()->addPeriodicTimer($this->getCleanupInterval(), function () {
+        TmiCluster::joinNextServer(['ghostzero']);
+
+        $cleanupInterval = $this->getCleanupInterval();
+        $this->log('Register cleanup loop for every ' . $cleanupInterval . ' sec.');
+        $this->client->getLoop()->addPeriodicTimer($cleanupInterval, function () {
             try {
                 $this->autoCleanup->cleanup($this);
             } catch (Exception $e) {
-                $this->log($e->getMessage());
+                $this->log($e->getTraceAsString());
             }
         });
     }
@@ -188,8 +192,8 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         $this->working = false;
 
         // evacuate all current channels to a new process
-        $result = TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
-        $this->log(sprintf('TMI Client evacuated! Lost: %s, Migrated: %s', count($result['lost']), count($result['migrated'])));
+        TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
+        $this->log(sprintf('TMI Client evacuated! Migrated: %s', count($this->client->getChannels())));
 
         $this->exit($status);
     }

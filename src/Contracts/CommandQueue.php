@@ -43,7 +43,7 @@ interface CommandQueue
     /**
      * Queue to handle lost and found cases. Eg. a channel cannot be joined.
      */
-    public const NAME_LOST_AND_FOUND = 'lost-and-found';
+    public const NAME_JOIN_HANDLER = 'join-handler';
 
     /**
      * Supervisor queue: First-come, First-served.
