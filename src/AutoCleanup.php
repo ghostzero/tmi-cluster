@@ -2,7 +2,7 @@
 
 namespace GhostZero\TmiCluster;
 
-use romanzipp\Twitch\Twitch;
+use GhostZero\TmiCluster\Twitch\Twitch;
 use Throwable;
 
 class AutoCleanup
@@ -20,8 +20,16 @@ class AutoCleanup
             return;
         }
 
+        /** @var Twitch $twitch */
+        $twitch = app(Twitch::class);
+
+        if (!$twitch->shouldFetchClientCredentials()) {
+            $client->log(sprintf('Auto Cleanup: No client credentials are given.'));
+            return;
+        }
+
         try {
-            $diff = static::diff($client->getClient()->getChannels());
+            $diff = static::diff($twitch, $client->getClient()->getChannels());
         } catch (Throwable $exception) {
             $client->log(sprintf('Auto Cleanup: Failed to diff. Reason: ' . $exception->getMessage()));
             return;
@@ -29,7 +37,7 @@ class AutoCleanup
 
         $locked = 0;
         foreach ($diff['part'] as $channel => $login) {
-            if ($channel === null || $login == null) {
+            if (empty($channel) || empty($login)) {
                 continue;
             }
 
@@ -54,25 +62,25 @@ class AutoCleanup
         return config('tmi-cluster.auto_cleanup.enabled');
     }
 
-    public static function diff(array $collection): array
+    public static function diff(Twitch $twitch, array $connectedChannels): array
     {
-        $connectedChannels = array_map(static fn($data) => ltrim($data, '#'), $collection);
-        $onlineChannels = self::getOnlineChannels($connectedChannels, app(Twitch::class));
+        $connectedChannels = array_map(static fn($data) => ltrim($data, '#'), $connectedChannels);
+        $onlineChannels = self::getOnlineChannels($twitch, $connectedChannels);
 
         return [
             'connected' => $connectedChannels,
-            'part' => array_diff($connectedChannels, $onlineChannels),
+            'part' => array_udiff($connectedChannels, $onlineChannels, 'strcasecmp'),
         ];
     }
 
-    private static function getOnlineChannels(array $connectedChannels, Twitch $twitch): array
+    private static function getOnlineChannels(Twitch $twitch, array $connectedChannels): array
     {
         $resolved = array_map(static function (array $collection) use ($twitch) {
             $result = $twitch->getStreams(['user_login' => $collection]);
 
             abort_unless($result->success(), 503, $result->error());
 
-            return array_map(static fn($x) => dd($x), $result->data());
+            return array_map(static fn($x) => $x->user_name, $result->data());
         }, array_chunk($connectedChannels, 100));
 
         return array_merge(...$resolved);

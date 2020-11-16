@@ -121,9 +121,9 @@ return [
     | TMI Cluster Auto Cleanup
     |--------------------------------------------------------------------------
     |
-    | The Auto Cleanup automatically parts channels that are offline. This
-    | feature uses the romanzipp/laravel-twitch library, please configure
-    | your Laravel project. Before you enable this function.
+    | The Auto Cleanup automatically parts channels that are offline. If you
+    | using this feature, please also configure the Twitch Helix Credentials
+    | below. Otherwise, we cannot fetch channels.
     |
     | See: https://github.com/romanzipp/Laravel-Twitch
     |
@@ -133,6 +133,26 @@ return [
         'enabled' => false,
         'interval' => 300,
         'max_delay' => 600,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Twitch Helix Credentials
+    |--------------------------------------------------------------------------
+    |
+    | Only required to configure, if you plan to use the auto cleanup feature.
+    |
+    */
+
+    'helix' => [
+        'client_id' => env('TMI_CLUSTER_HELIX_KEY', env('TWITCH_HELIX_KEY', '')),
+        'client_secret' => env('TMI_CLUSTER_HELIX_SECRET', env('TWITCH_HELIX_SECRET', '')),
+        'oauth_client_credentials' => [
+            'cache' => true,
+            'cache_driver' => null,
+            'cache_store' => null,
+            'cache_key' => 'twitch-api-client-credentials',
+        ],
     ],
 
     /*

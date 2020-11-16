@@ -20,18 +20,22 @@
     }
   },
   "require": {
-    "php": "^7.4",
-    "ghostzero/tmi": "dev-master",
-    "illuminate/support": "^8.1",
-    "illuminate/console": "^8.1",
-    "predis/predis": "^1.1",
+    "php": "^7.4|^8.0",
     "ext-json": "*",
     "ext-pcntl": "*",
+    "ext-posix": "*",
+    "ghostzero/tmi": "dev-master",
+    "illuminate/console": "^8.1",
+    "illuminate/support": "^8.1",
+    "predis/predis": "^1.1",
     "romanzipp/laravel-twitch": "^3.0"
   },
   "require-dev": {
     "orchestra/testbench": "^6.0",
     "phpunit/phpunit": "^9.3"
+  },
+  "config": {
+    "sort-packages": true
   },
   "extra": {
     "laravel": {

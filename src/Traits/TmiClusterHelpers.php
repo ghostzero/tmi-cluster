@@ -38,6 +38,6 @@ trait TmiClusterHelpers
             $channel = "#$channel";
         }
 
-        return $channel;
+        return strtolower($channel);
     }
 }

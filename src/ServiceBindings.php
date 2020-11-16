@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster;
 
 use GhostZero\TmiCluster\Contracts;
+use GhostZero\TmiCluster\Twitch\Twitch;
 
 trait ServiceBindings
 {
@@ -16,6 +17,7 @@ trait ServiceBindings
         AutoScale::class,
         AutoCleanup::class,
         Contracts\ClusterClient::class => TmiClusterClient::class,
+        Twitch::class,
 
         // Repository services...
         Contracts\SupervisorRepository::class => Repositories\SupervisorRepository::class,
