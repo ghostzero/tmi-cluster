@@ -109,7 +109,7 @@ class DurationLimiter
     public function acquire()
     {
         $results = $this->redis->eval(
-            $this->luaScript(), $this->locks, $this->name, microtime(true), time(), $this->decay, $this->maxLocks
+            $this->luaScript(), 1, $this->name, microtime(true), time(), $this->decay, $this->maxLocks, $this->locks
         );
 
         $this->decaysAt = $results[1];
@@ -127,6 +127,7 @@ class DurationLimiter
      * ARGV[2] - Current time in seconds
      * ARGV[3] - Duration of the bucket
      * ARGV[4] - Allowed number of tasks
+     * ARGV[5] - Tasks per execution
      *
      * @return string
      */
@@ -134,23 +135,23 @@ class DurationLimiter
     {
         return <<<'LUA'
 local function reset()
-    redis.call('HMSET', KEYS[1], 'start', ARGV[2], 'end', ARGV[2] + ARGV[3], 'count', 1)
+    redis.call('HMSET', KEYS[1], 'start', ARGV[2], 'end', ARGV[2] + ARGV[3], 'count', ARGV[5])
     return redis.call('EXPIRE', KEYS[1], ARGV[3] * 2)
 end
 
 if redis.call('EXISTS', KEYS[1]) == 0 then
-    return {reset(), ARGV[2] + ARGV[3], ARGV[4] - 1}
+    return {reset(), ARGV[2] + ARGV[3], ARGV[4] - ARGV[5]}
 end
 
 if ARGV[1] >= redis.call('HGET', KEYS[1], 'start') and ARGV[1] <= redis.call('HGET', KEYS[1], 'end') then
     return {
-        tonumber(redis.call('HINCRBY', KEYS[1], 'count', 1)) <= tonumber(ARGV[4]),
+        tonumber(redis.call('HINCRBY', KEYS[1], 'count', ARGV[5])) <= tonumber(ARGV[4]),
         redis.call('HGET', KEYS[1], 'end'),
         ARGV[4] - redis.call('HGET', KEYS[1], 'count')
     }
 end
 
-return {reset(), ARGV[2] + ARGV[3], ARGV[4] - 1}
+return {reset(), ARGV[2] + ARGV[3], ARGV[4] - ARGV[5]}
 LUA;
     }
 }

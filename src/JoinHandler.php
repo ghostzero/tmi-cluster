@@ -58,8 +58,8 @@ class JoinHandler
                 continue;
             }
 
-            $staleIds = array_merge($staleIds, $command->options->staleIds);
-            $channels = array_merge($channels, $command->options->channels);
+            $staleIds = array_merge($staleIds, (array)$command->options->staleIds);
+            $channels = array_merge($channels, (array)$command->options->channels);
         }
 
         $this->joinOrQueue(array_unique($channels), array_unique($staleIds), $commandQueue);
@@ -67,7 +67,7 @@ class JoinHandler
 
     private function joinOrQueue(array $channels, array $staleIds, CommandQueue $commandQueue): array
     {
-        $result = ['queued' => [], 'migrated' => []];
+        $result = ['rejected' => [], 'resolved' => []];
 
         $supervisors = Models\Supervisor::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(10))
@@ -82,19 +82,22 @@ class JoinHandler
             })->sortBy('channels');
 
         if ($supervisors->isEmpty()) {
-            $this->reject($result, $channels, $staleIds, $commandQueue);
+            $result = $this->reject($result, $channels, $staleIds, $commandQueue);
 
             return $this->result($result);
         }
 
-        $take = config('tmi-cluster.throttle.join.take', 100);
+        $take = min(
+            config('tmi-cluster.throttle.join.take', 100),
+            config('tmi-cluster.throttle.join.allow', 2000)
+        );
 
         foreach (array_chunk($channels, $take) as $channels) {
             /** @var Lock $lock */
             $lock = app(Lock::class);
 
             /** @noinspection PhpUnhandledExceptionInspection */
-            $lock->throttle('throttle:join-handler')
+            $result = $lock->throttle('throttle:join-handler')
                 ->block(config('tmi-cluster.throttle.join.block', 0))
                 ->allow(config('tmi-cluster.throttle.join.allow', 2000))
                 ->every(config('tmi-cluster.throttle.join.every', 10))
@@ -108,7 +111,7 @@ class JoinHandler
         return $this->result($result);
     }
 
-    private function reject(array &$result, array $channels, array $staleIds, CommandQueue $commandQueue): void
+    private function reject(array $result, array $channels, array $staleIds, CommandQueue $commandQueue): array
     {
         // we didn't get any server, that is ready to join our channels
         // so we move them to our lost and found channel queue
@@ -117,12 +120,14 @@ class JoinHandler
             'staleIds' => $staleIds,
         ]);
 
-        $result['queued'][] = $channels;
+        $result['rejected'][] = $channels;
+
+        return $result;
     }
 
-    private function resolve(array &$result, array $channels, array $staleIds, CommandQueue $commandQueue, Collection $supervisors): void
+    private function resolve(array $result, array $channels, array $staleIds, CommandQueue $commandQueue, Collection $supervisors): array
     {
-        $migrated = [];
+        $resolved = [];
         foreach ($channels as $channel) {
             $nextSupervisor = $supervisors->sortBy('channels')->shift();
             $nextSupervisor['channels'] += 1;
@@ -133,16 +138,18 @@ class JoinHandler
                 'staleIds' => $staleIds,
             ]);
 
-            $migrated[$channel] = $nextSupervisor['name'];
+            $resolved[$channel] = $nextSupervisor['name'];
         }
 
-        $result['migrated'][] = $migrated;
+        $result['resolved'][] = $resolved;
+
+        return $result;
     }
 
     private function result(array $result): array
     {
-        $result['queued'] = array_merge(...$result['queued']);
-        $result['migrated'] = array_merge(...$result['migrated']);
+        $result['rejected'] = array_merge(...$result['rejected']);
+        $result['resolved'] = array_merge(...$result['resolved']);
 
         return $result;
     }
