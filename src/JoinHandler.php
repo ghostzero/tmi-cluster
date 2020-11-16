@@ -5,7 +5,7 @@ namespace GhostZero\TmiCluster;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\Process\Process;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 
 /**
  * This class handles the channel reconnection.
