@@ -65,7 +65,7 @@ class SupervisorRepository implements Repository
             }
         });
 
-        app(JoinHandler::class)->joinLostChannels($channels, $staleIds);
+        $this->getJoinHandler()->joinLostChannels($channels, $staleIds);
     }
 
     private function deleteStaleProcess($process): void
@@ -93,5 +93,10 @@ class SupervisorRepository implements Repository
         }
 
         return $key;
+    }
+
+    private function getJoinHandler(): JoinHandler
+    {
+        return app(JoinHandler::class);
     }
 }

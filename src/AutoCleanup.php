@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster;
 
 use romanzipp\Twitch\Twitch;
+use Throwable;
 
 class AutoCleanup
 {
@@ -19,7 +20,11 @@ class AutoCleanup
             return;
         }
 
-        $diff = static::diff($client->getClient()->getChannels());
+        try {
+            $diff = static::diff($client->getClient()->getChannels());
+        } catch (Throwable $exception) {
+            $client->log(sprintf('Auto Cleanup: Failed to diff. Reason: ' . $exception->getMessage()));
+        }
 
         foreach ($diff['part'] as $channel => $login) {
             if ($channel === null || $login == null) {
@@ -55,20 +60,21 @@ class AutoCleanup
 
         return [
             'connected' => $connectedChannels,
-            'join' => array_diff($onlineChannels, $connectedChannels),
             'part' => array_diff($connectedChannels, $onlineChannels),
         ];
     }
 
     private static function getOnlineChannels(array $connectedChannels, Twitch $twitch): array
     {
-        return array_map(static function (array $collection) use ($twitch) {
+        $resolved = array_map(static function (array $collection) use ($twitch) {
             $result = $twitch->getStreams(['user_login' => $collection]);
 
             abort_unless($result->success(), 503, $result->error());
 
-            return array_map(static fn($x) => strtolower($x->user_name), $result->data());
+            return array_map(static fn($x) => dd($x), $result->data());
         }, array_chunk($connectedChannels, 100));
+
+        return array_merge(...$resolved);
     }
 
     private function getKey(TmiClusterClient $client, string $channel): string

@@ -113,8 +113,6 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
             event(new PeriodicTimerCalled());
         });
 
-        TmiCluster::joinNextServer(['ghostzero']);
-
         $cleanupInterval = $this->getCleanupInterval();
         $this->log('Register cleanup loop for every ' . $cleanupInterval . ' sec.');
         $this->client->getLoop()->addPeriodicTimer($cleanupInterval, function () {
@@ -254,6 +252,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
     private function getCleanupInterval(): int
     {
-        return config('tmi-cluster.auto_cleanup.interval', 300) + random_int(0, 600);
+        return config('tmi-cluster.auto_cleanup.interval', 300)
+            + random_int(0, max(0, config('tmi-cluster.auto_cleanup.max_delay', 600)));
     }
 }

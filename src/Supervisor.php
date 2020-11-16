@@ -8,7 +8,6 @@ use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
-use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Process\Process;
 use GhostZero\TmiCluster\Process\ProcessOptions;
 use GhostZero\TmiCluster\Process\ProcessPool;

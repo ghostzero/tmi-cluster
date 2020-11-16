@@ -132,6 +132,28 @@ return [
     'auto_cleanup' => [
         'enabled' => false,
         'interval' => 300,
+        'max_delay' => 600,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Rate Limiter
+    |--------------------------------------------------------------------------
+    |
+    | Authentication and join rate limits are:
+    |  - 20 authenticate attempts per 10 seconds per user (200 for verified bots)
+    |  - 20 join attempts per 10 seconds per user (2000 for verified bots)
+    |
+    | See: https://dev.twitch.tv/docs/irc/guide#command--message-limits
+    |
+    */
+
+    'throttle' => [
+        'join' => [
+            'block' => 0,
+            'allow' => 2000,
+            'every' => 10,
+        ],
     ],
 
 ];

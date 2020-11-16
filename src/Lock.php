@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster;
 
 use Illuminate\Contracts\Redis\Factory as RedisFactory;
 use Illuminate\Redis\Connections\Connection;
+use Illuminate\Redis\Limiters\DurationLimiterBuilder;
 
 class Lock
 {
@@ -49,5 +50,16 @@ class Lock
     public function connection(): Connection
     {
         return $this->redis->connection('tmi-cluster');
+    }
+
+    /**
+     * Throttle a callback for a maximum number of executions over a given duration.
+     *
+     * @param string $name
+     * @return DurationLimiterBuilder
+     */
+    public function throttle($name)
+    {
+        return new DurationLimiterBuilder($this->connection(), 'throttle:' . $name);
     }
 }
