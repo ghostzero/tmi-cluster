@@ -24,7 +24,10 @@ class AutoCleanup
             $diff = static::diff($client->getClient()->getChannels());
         } catch (Throwable $exception) {
             $client->log(sprintf('Auto Cleanup: Failed to diff. Reason: ' . $exception->getMessage()));
+            return;
         }
+
+        $locked = 0;
 
         foreach ($diff['part'] as $channel => $login) {
             if ($channel === null || $login == null) {
@@ -32,15 +35,15 @@ class AutoCleanup
             }
 
             if ($this->lock->exists($this->getKey($client, $channel))) {
-                $client->log(sprintf('Auto Cleanup: Part is locked for %s', $channel));
-                return;
+                $locked++;
+                continue;
             }
 
             $client->log(sprintf('Auto Cleanup: Part %s', $channel));
             $client->getClient()->part($channel);
         }
 
-        $client->log(sprintf('Cleanup complete! Part: %s', count($diff['part'])));
+        $client->log(sprintf('Cleanup complete! Needs Part: %s, Locked: %s', count($diff['part']), $locked));
     }
 
     public function acquireLock(TmiClusterClient $client, string $channel): void
