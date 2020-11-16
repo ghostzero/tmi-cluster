@@ -153,6 +153,7 @@ return [
             'block' => 0,
             'allow' => 2000,
             'every' => 10,
+            'take' => 100,
         ],
     ],
 

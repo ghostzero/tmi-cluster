@@ -87,15 +87,18 @@ class JoinHandler
             return $this->result($result);
         }
 
-        foreach (array_chunk($channels, 100) as $channels) {
+        $take = config('tmi-cluster.throttle.join.take', 100);
+
+        foreach (array_chunk($channels, $take) as $channels) {
             /** @var Lock $lock */
             $lock = app(Lock::class);
 
             /** @noinspection PhpUnhandledExceptionInspection */
-            $lock->throttle('join-handler')
+            $lock->throttle('throttle:join-handler')
                 ->block(config('tmi-cluster.throttle.join.block', 0))
                 ->allow(config('tmi-cluster.throttle.join.allow', 2000))
                 ->every(config('tmi-cluster.throttle.join.every', 10))
+                ->take($take)
                 ->then(
                     fn() => $this->resolve($result, $channels, $staleIds, $commandQueue, $supervisors),
                     fn() => $this->reject($result, $channels, $staleIds, $commandQueue)
