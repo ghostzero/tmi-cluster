@@ -2,7 +2,7 @@
 
 namespace GhostZero\TmiCluster\Commands;
 
-use GhostZero\TmiCluster\Contracts\CommandQueue;
+use GhostZero\TmiCluster\TmiCluster;
 use Illuminate\Console\Command;
 
 class TmiClusterJoinCommand extends Command
@@ -28,12 +28,7 @@ class TmiClusterJoinCommand extends Command
      */
     public function handle(): int
     {
-        /** @var CommandQueue $commandQueue */
-        $commandQueue = app(CommandQueue::class);
-
-        $commandQueue->push('*', 'tmi:join', [
-            'channel' => $this->argument('channel')
-        ]);
+        TmiCluster::joinNextServer([$this->argument('channel')]);
 
         return 0;
     }
