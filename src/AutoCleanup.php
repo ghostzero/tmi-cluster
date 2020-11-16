@@ -28,7 +28,6 @@ class AutoCleanup
         }
 
         $locked = 0;
-
         foreach ($diff['part'] as $channel => $login) {
             if ($channel === null || $login == null) {
                 continue;
@@ -39,7 +38,6 @@ class AutoCleanup
                 continue;
             }
 
-            $client->log(sprintf('Auto Cleanup: Part %s', $channel));
             $client->getClient()->part($channel);
         }
 
