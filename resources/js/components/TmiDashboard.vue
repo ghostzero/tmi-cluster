@@ -127,14 +127,20 @@ export default {
       if (!this.statistics) return false;
 
       let operational = true;
+      let processes = 0;
 
       this.statistics.supervisors.forEach(s => {
         s.processes.forEach(p => {
           if (p.state !== 'connected') {
             operational = false;
+          } else {
+            processes++;
           }
         });
       });
+
+      // we need at least one process to be healthy
+      operational = operational ? processes > 0 : false;
 
       this.updateIcon(operational);
 

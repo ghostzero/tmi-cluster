@@ -105,6 +105,7 @@ return [
     */
 
     'auto_scale' => [
+        'restore' => true,
         'processes' => [
             'min' => 2,
             'max' => 25

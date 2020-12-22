@@ -5,6 +5,8 @@ namespace GhostZero\TmiCluster;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\Process\Process;
+use GhostZero\TmiCluster\Support\Arr;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
@@ -39,118 +41,23 @@ class JoinHandler
     }
 
     /**
-     * Method to rejoin gabage-collected and lost channels.
+     * Method to rejoin garbage-collected and lost channels.
      *
-     * Given channels & stale ids are from the gabage collector.
+     * Given channels & stale ids are from the garbage collector.
      *
      * @param array $staleIds
      * @param array $channels
+     * @return array
      */
-    public function joinLostChannels(array $channels = [], array $staleIds = [])
+    public function joinLostChannels(array $channels = [], array $staleIds = []): array
     {
         /** @var CommandQueue $commandQueue */
         $commandQueue = app(CommandQueue::class);
 
         $commands = $commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
-        foreach ($commands as $command) {
-            if ($command->command !== CommandQueue::COMMAND_TMI_JOIN) {
-                continue;
-            }
+        [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
 
-            $staleIds = array_merge($staleIds, (array)$command->options->staleIds);
-            $channels = array_merge($channels, (array)$command->options->channels);
-        }
-
-        $this->joinOrQueue(array_unique($channels), array_unique($staleIds), $commandQueue);
-    }
-
-    private function joinOrQueue(array $channels, array $staleIds, CommandQueue $commandQueue): array
-    {
-        $result = ['rejected' => [], 'resolved' => []];
-
-        $supervisors = Models\Supervisor::query()
-            ->whereTime('last_ping_at', '>', now()->subSeconds(10))
-            ->whereNotIn('id', $staleIds)
-            ->get()->map(function (Models\Supervisor $supervisor) {
-                return [
-                    'name' => $supervisor->getKey(),
-                    'channels' => $supervisor->processes->sum(function (Models\SupervisorProcess $process) {
-                        return count($process->channels);
-                    }),
-                ];
-            })->sortBy('channels');
-
-        if ($supervisors->isEmpty()) {
-            $result = $this->reject($result, $channels, $staleIds, $commandQueue);
-
-            return $this->result($result);
-        }
-
-        $take = min(
-            config('tmi-cluster.throttle.join.take', 100),
-            config('tmi-cluster.throttle.join.allow', 2000)
-        );
-
-        foreach (array_chunk($channels, $take) as $channels) {
-            /** @var Lock $lock */
-            $lock = app(Lock::class);
-
-            /** @noinspection PhpUnhandledExceptionInspection */
-            $result = $lock->throttle('throttle:join-handler')
-                ->block(config('tmi-cluster.throttle.join.block', 0))
-                ->allow(config('tmi-cluster.throttle.join.allow', 2000))
-                ->every(config('tmi-cluster.throttle.join.every', 10))
-                ->take($take)
-                ->then(
-                    fn() => $this->resolve($result, $channels, $staleIds, $commandQueue, $supervisors),
-                    fn() => $this->reject($result, $channels, $staleIds, $commandQueue)
-                );
-        }
-
-        return $this->result($result);
-    }
-
-    private function reject(array $result, array $channels, array $staleIds, CommandQueue $commandQueue): array
-    {
-        // we didn't get any server, that is ready to join our channels
-        // so we move them to our lost and found channel queue
-        $commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
-            'channels' => $channels,
-            'staleIds' => $staleIds,
-        ]);
-
-        $result['rejected'][] = $channels;
-
-        return $result;
-    }
-
-    private function resolve(array $result, array $channels, array $staleIds, CommandQueue $commandQueue, Collection $supervisors): array
-    {
-        $resolved = [];
-        foreach ($channels as $channel) {
-            $nextSupervisor = $supervisors->sortBy('channels')->shift();
-            $nextSupervisor['channels'] += 1;
-            $supervisors->push($nextSupervisor);
-
-            $commandQueue->push($nextSupervisor['name'], CommandQueue::COMMAND_TMI_JOIN, [
-                'channel' => $channel,
-                'staleIds' => $staleIds,
-            ]);
-
-            $resolved[$channel] = $nextSupervisor['name'];
-        }
-
-        $result['resolved'][] = $resolved;
-
-        return $result;
-    }
-
-    private function result(array $result): array
-    {
-        $result['rejected'] = array_merge(...$result['rejected']);
-        $result['resolved'] = array_merge(...$result['resolved']);
-
-        return $result;
+        return $this->joinOrQueue($channels, $staleIds, $commandQueue);
     }
 }

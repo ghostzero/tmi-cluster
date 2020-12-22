@@ -3,9 +3,11 @@
 namespace GhostZero\TmiCluster;
 
 use Closure;
+use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
+use GhostZero\TmiCluster\Contracts\SupervisorJoinHandler;
 use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
 use GhostZero\TmiCluster\Process\Process;
@@ -23,7 +25,6 @@ class Supervisor implements Pausable, Restartable, Terminable
     public Models\Supervisor $model;
     public array $processPools = [];
     private AutoScale $autoScale;
-    private JoinHandler $joinHandler;
     private CommandQueue $commandQueue;
     private Closure $output;
 
@@ -32,7 +33,6 @@ class Supervisor implements Pausable, Restartable, Terminable
         $this->model = $model;
         $this->processPools = $this->createProcessPools();
         $this->autoScale = app(AutoScale::class);
-        $this->joinHandler = app(JoinHandler::class);
         $this->commandQueue = app(CommandQueue::class);
         $this->output = static function () {
             //
@@ -179,17 +179,17 @@ class Supervisor implements Pausable, Restartable, Terminable
         $this->exit($status);
     }
 
-    protected function shouldWait()
+    protected function shouldWait(): bool
     {
         return !config('tmi-cluster.fast_termination');
     }
 
-    protected function exit($status = 0)
+    protected function exit($status = 0): void
     {
         $this->exitProcess($status);
     }
 
-    protected function exitProcess($status = 0)
+    protected function exitProcess($status = 0): void
     {
         exit((int)$status);
     }
@@ -214,7 +214,7 @@ class Supervisor implements Pausable, Restartable, Terminable
         }
 
         if (!empty($channelsToJoin)) {
-            $this->joinHandler->join($this, $channelsToJoin);
+            app(SupervisorJoinHandler::class)->handle($this, $channelsToJoin);
         }
     }
 }

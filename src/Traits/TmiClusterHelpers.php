@@ -2,6 +2,8 @@
 
 namespace GhostZero\TmiCluster\Traits;
 
+use GhostZero\Tmi\Channel;
+use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 
 trait TmiClusterHelpers
@@ -11,7 +13,7 @@ trait TmiClusterHelpers
         /** @var CommandQueue $commandQueue */
         $commandQueue = app(CommandQueue::class);
 
-        $channel = self::channelName($channel);
+        $channel = Channel::sanitize($channel);
         $commandQueue->push(CommandQueue::NAME_ANY_SUPERVISOR, CommandQueue::COMMAND_TMI_WRITE, [
             'raw_command' => "PRIVMSG {$channel} :{$message}",
         ]);
@@ -23,21 +25,6 @@ trait TmiClusterHelpers
      */
     public static function joinNextServer(array $channels, array $staleIds = []): void
     {
-        /** @var CommandQueue $commandQueue */
-        $commandQueue = app(CommandQueue::class);
-
-        $commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
-            'channels' => array_map(static fn($channel) => self::channelName($channel), $channels),
-            'staleIds' => $staleIds,
-        ]);
-    }
-
-    private static function channelName(string $channel): string
-    {
-        if ($channel[0] !== '#') {
-            $channel = "#$channel";
-        }
-
-        return strtolower($channel);
+        app(ChannelDistributor::class)->join($channels, $staleIds);
     }
 }

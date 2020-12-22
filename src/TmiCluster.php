@@ -55,7 +55,7 @@ class TmiCluster
         static::$email = $email;
     }
 
-    public static function routeSlackNotificationsTo(string $url, string $channel = null)
+    public static function routeSlackNotificationsTo(string $url, string $channel = null): void
     {
         static::$slackWebhookUrl = $url;
         static::$slackChannel = $channel;
