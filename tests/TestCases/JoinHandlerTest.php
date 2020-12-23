@@ -6,6 +6,7 @@ use Carbon\CarbonInterface;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
+use GhostZero\TmiCluster\Repositories\RedisChannelManager;
 use GhostZero\TmiCluster\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -46,20 +47,27 @@ class JoinHandlerTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => [], 'ignored' => ['ghostzero' => $uuid]], $result);
+        self::assertEquals(['rejected' => [], 'resolved' => ['ghostzero' => $uuid], 'ignored' => []], $result);
 
-        $uuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
+        $uuid2 = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
-        $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
+        self::assertNotEquals($uuid, $uuid2);
 
-        self::assertEquals(['rejected' => [], 'resolved' => [], 'ignored' => [
-            'ghostzero' => $uuid,
+        $result = $this->getChannelDistributor()->joinNow(['ghostzero', 'test', 'test2', 'test3', 'test4'], []);
+
+        self::assertEquals(['rejected' => [], 'resolved' => [
+            'test' => $uuid2, // because the second process has the lowest channels amount
+            'test2' => $uuid, // because the first process has the lowest channels amount
+            'test3' => $uuid2, // because the second process has the lowest channels amount
+            'test4' => $uuid, // because the first process has the lowest channels amount
+        ], 'ignored' => [
+            'ghostzero' => $uuid, // because they got already joined in the first server
         ]], $result);
     }
 
     private function getChannelDistributor(): ChannelDistributor
     {
-        return app(ChannelDistributor::class);
+        return app(RedisChannelManager::class);
     }
 
     private function createSupervisor(CarbonInterface $lastPingAt, string $state, array $channels = []): string

@@ -12,6 +12,7 @@ use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Traits\JoinQueuedChannels;
 use Illuminate\Contracts\Redis\LimiterTimeoutException;
 use Illuminate\Support\Collection;
+use stdClass;
 
 class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
 {
@@ -53,7 +54,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
     {
         $result = ['rejected' => [], 'resolved' => [], 'ignored' => []];
 
-        $processes = Models\Supervisor::query()
+        $processes = Models\SupervisorProcess::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(10))
             ->whereIn('state', [Models\SupervisorProcess::STATE_CONNECTED])
             ->whereNotIn('id', $staleIds)
@@ -113,25 +114,28 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
     private function resolve(array $result, array $channels, array $staleIds, CommandQueue $commandQueue, Collection $processes): array
     {
         foreach ($channels as $channel) {
-            if ($process = $processes->whereIn('channels', [$channel])->first()) {
-                $result['ignored'][$channel] = $process['id'];
+            if ($process = $this->getProcess($processes, $channel)) {
+                if($process instanceof stdClass) {
+                    $result['ignored'][$channel] = $this->increment($process, $channel);
+                } else {
+                    $result['ignored'][$channel] = $process;
+                }
                 continue;
             }
 
-            // acquire lock to prevent double join
-            $this->lock->get($this->getKey($channel), 300);
-
             $nextProcess = $processes->sortBy('channel_sum')->shift();
-            $nextProcess['channel_sum'] += 1;
-            $nextProcess['channels'][] = $channel;
+            $this->increment($nextProcess, $channel);
             $processes->push($nextProcess);
 
-            $commandQueue->push($nextProcess['id'], CommandQueue::COMMAND_TMI_JOIN, [
+            // acquire lock to prevent double join
+            $this->lock->connection()->set($this->getKey($channel), $nextProcess->id, 'EX', 60, 'NX');
+
+            $commandQueue->push($nextProcess->id, CommandQueue::COMMAND_TMI_JOIN, [
                 'channel' => $channel,
                 'staleIds' => $staleIds,
             ]);
 
-            $result['resolved'][$channel] = $nextProcess['id'];
+            $result['resolved'][$channel] = $nextProcess->id;
         }
 
         return $result;
@@ -146,6 +150,27 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
 
     private function getKey(string $channel)
     {
-        return sprintf('channel-manager:part-%s', $channel);
+        return sprintf('channel-manager:join-%s', $channel);
+    }
+
+    private function getProcess(Collection $processes, string $channel)
+    {
+        if ($id = $this->lock->connection()->get($this->getKey($channel))) {
+            if ($process = $processes->where('id', '===', $id)->first()) {
+                return $process;
+            }
+
+            return $id;
+        }
+
+        return $processes->whereIn('channels', [$channel])->first();
+    }
+
+    private function increment(stdClass $process, $channel): string
+    {
+        $process->channel_sum += 1;
+        $process->channels[] = $channel;
+
+        return $process->id;
     }
 }

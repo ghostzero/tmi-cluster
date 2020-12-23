@@ -21,6 +21,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
         // additional setup
 
         //$this->artisan('migrate')->run();
+        $this->flushRedis();
     }
 
     protected function getPackageProviders($app)

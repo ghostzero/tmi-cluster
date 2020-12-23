@@ -11,8 +11,6 @@ class AutoScaleTest extends TestCase
 {
     public function testSetRestore()
     {
-        $this->flushRedis();
-
         $this->setRestore(false);
         self::assertFalse($this->getAutoScale()->shouldRestoreScale());
 
@@ -22,7 +20,6 @@ class AutoScaleTest extends TestCase
 
     public function testRestoreScale()
     {
-        $this->flushRedis();
         $config = config('tmi-cluster.auto_scale.processes.min');
         $this->getAutoScale()->setMinimumScale(7);
 
