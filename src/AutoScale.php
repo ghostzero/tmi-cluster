@@ -55,6 +55,8 @@ class AutoScale
                 }
             }
 
+            $this->setMinimumScale($supervisor->processes()->count());
+
             $this->releaseStaleSupervisors($supervisor);
         } catch (Throwable $exception) {
             $supervisor->output(null, $exception->getTraceAsString());
@@ -92,17 +94,17 @@ class AutoScale
         }
     }
 
-    private function shouldScaleOut(float $usage): bool
+    public function shouldScaleOut(float $usage): bool
     {
         return $usage > config('tmi-cluster.auto_scale.thresholds.scale_out', 70);
     }
 
-    private function shouldRestoreScale(): bool
+    public function shouldRestoreScale(): bool
     {
         return config('tmi-cluster.auto_scale.restore', true);
     }
 
-    private function shouldScaleIn(float $usage): bool
+    public function shouldScaleIn(float $usage): bool
     {
         return $usage < config('tmi-cluster.auto_scale.thresholds.scale_in', 50);
     }
@@ -164,13 +166,18 @@ class AutoScale
         return $c;
     }
 
-    private function getMinimumScale(): int
+    public function getMinimumScale(): int
     {
+        $default = config('tmi-cluster.auto_scale.processes.min', 2);
         if (!$this->shouldRestoreScale()) {
-            return config('tmi-cluster.auto_scale.processes.min', 2);
+            return $default;
         }
 
-        // todo implement scale restore (https://github.com/ghostzero/tmi-cluster/issues/8)
-        return config('tmi-cluster.auto_scale.processes.min', 2);
+        return $this->connection()->get('auto-scale:minimum-scale') ?? $default;
+    }
+
+    public function setMinimumScale(int $scale)
+    {
+        return $this->connection()->set('auto-scale:minimum-scale', $scale, 'EX', 60);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster\Http\Controllers;
 
+use GhostZero\TmiCluster\AutoScale;
 use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Http\Request;
@@ -15,6 +16,9 @@ class DashboardController extends Controller
 
     public function statistics(Request $request): array
     {
+        /** @var AutoScale $autoScale */
+        $autoScale = app(AutoScale::class);
+
         $supervisors = Supervisor::query()->get();
 
         $ircMessages = $supervisors
@@ -57,6 +61,9 @@ class DashboardController extends Controller
                     });
                 }),
             'processes' => $supervisors->sum(fn(Supervisor $supervisor) => count($supervisor->processes)),
+            'auto_scale' => array_merge(config('tmi-cluster.auto_scale'), [
+                'minimum_scale' => $autoScale->getMinimumScale(),
+            ]),
         ];
     }
 

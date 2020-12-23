@@ -5,7 +5,10 @@ namespace GhostZero\TmiCluster\Tests;
 
 use GhostZero\TmiCluster\Facades\TmiCluster;
 use GhostZero\TmiCluster\Providers\TmiClusterServiceProvider;
+use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Contracts\Redis\Factory;
 use Illuminate\Foundation\Application;
+use Predis\ClientInterface;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
@@ -49,5 +52,12 @@ class TestCase extends \Orchestra\Testbench\TestCase
             'database' => ':memory:',
             'prefix'   => '',
         ]);
+    }
+
+    protected function flushRedis()
+    {
+        /** @var ClientInterface $connection */
+        $connection = app(Factory::class)->connection('tmi-cluster');
+        $connection->flushdb();
     }
 }
