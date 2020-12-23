@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Tests\TestCases;
 
 use Carbon\CarbonInterface;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Repositories\RedisChannelManager;
@@ -63,6 +64,8 @@ class JoinHandlerTest extends TestCase
         ], 'ignored' => [
             'ghostzero' => $uuid, // because they got already joined in the first server
         ]], $result);
+
+        $this->assertGotQueued($result, 5);
     }
 
     private function getChannelDistributor(): ChannelDistributor
@@ -90,5 +93,35 @@ class JoinHandlerTest extends TestCase
         ]);
 
         return (string)$process->getKey();
+    }
+
+    private function assertGotQueued(array $result, int $expectedCount)
+    {
+        $processIds = array_unique(array_merge(
+            array_values($result['rejected']),
+            array_values($result['resolved']),
+            array_values($result['ignored'])
+        ));
+
+        self::assertNotEmpty($processIds);
+        $commands = $this->getPendingCommands($processIds);
+        self::assertCount($expectedCount, $commands);
+    }
+
+    /**
+     * @param array $processIds
+     * @return array
+     */
+    private function getPendingCommands(array $processIds): array
+    {
+        /** @var CommandQueue $commandQueue */
+        $commandQueue = app(CommandQueue::class);
+
+        $commands = [];
+        foreach ($processIds as $processId) {
+            $commands[] = $commandQueue->pending($processId);
+        }
+        $commands = array_merge(...$commands);
+        return $commands;
     }
 }
