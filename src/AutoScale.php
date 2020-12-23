@@ -64,7 +64,7 @@ class AutoScale
     }
 
     /**
-     * Get the Redis connection instance.
+     * Get the Redis connecDashbtion instance.
      *
      * @return Connection|ClientInterface
      */

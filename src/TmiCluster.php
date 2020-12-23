@@ -76,6 +76,7 @@ class TmiCluster
             Route::get('', [Controllers\DashboardController::class, 'index']);
             Route::post('statistics', [Controllers\DashboardController::class, 'statistics']);
             Route::get('statistics', [Controllers\DashboardController::class, 'statistics']);
+            Route::get('operational', [Controllers\DashboardController::class, 'operational']);
             Route::get('metrics', [Controllers\MetricsController::class, 'handle']);
         });
     }
