@@ -12,7 +12,7 @@ trait ServiceBindings
      *
      * @var array
      */
-    public $serviceBindings = [
+    public array $serviceBindings = [
         // General services...
         AutoScale::class,
         AutoCleanup::class,
@@ -22,5 +22,7 @@ trait ServiceBindings
         // Repository services...
         Contracts\SupervisorRepository::class => Repositories\SupervisorRepository::class,
         Contracts\CommandQueue::class => Repositories\RedisCommandQueue::class,
+        Contracts\ChannelDistributor::class => Repositories\RedisChannelManager::class,
+        Contracts\SupervisorJoinHandler::class => Repositories\RedisChannelManager::class,
     ];
 }

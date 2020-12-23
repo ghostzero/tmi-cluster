@@ -2,9 +2,12 @@
 
 namespace GhostZero\TmiCluster\Http\Controllers;
 
+use GhostZero\TmiCluster\AutoScale;
 use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class DashboardController extends Controller
 {
@@ -13,8 +16,20 @@ class DashboardController extends Controller
         return view('tmi-cluster::dashboard.index');
     }
 
+    public function health(): Response
+    {
+        if ($this->isOperational(Supervisor::query()->get())) {
+            return response('', 204);
+        }
+
+        return response('', 503);
+    }
+
     public function statistics(Request $request): array
     {
+        /** @var AutoScale $autoScale */
+        $autoScale = app(AutoScale::class);
+
         $supervisors = Supervisor::query()->get();
 
         $ircMessages = $supervisors
@@ -45,6 +60,7 @@ class DashboardController extends Controller
 
         return [
             'time' => $time,
+            'operational' => $this->isOperational($supervisors),
             'supervisors' => $supervisors,
             'irc_messages' => $ircMessages,
             'irc_commands' => $ircCommands,
@@ -57,6 +73,9 @@ class DashboardController extends Controller
                     });
                 }),
             'processes' => $supervisors->sum(fn(Supervisor $supervisor) => count($supervisor->processes)),
+            'auto_scale' => array_merge(config('tmi-cluster.auto_scale'), [
+                'minimum_scale' => $autoScale->getMinimumScale(),
+            ]),
         ];
     }
 
@@ -72,5 +91,21 @@ class DashboardController extends Controller
         }
 
         return 0;
+    }
+
+    private function isOperational(Collection $supervisors): bool
+    {
+        $operational = $supervisors
+            ->sum(function (Supervisor $supervisor) {
+                return $supervisor->processes->filter(function (SupervisorProcess $process) {
+                    return $process->state === SupervisorProcess::STATE_CONNECTED;
+                })->count();
+            });
+        $count = $supervisors
+            ->sum(function (Supervisor $supervisor) {
+                return $supervisor->processes->count();
+            });
+
+        return $count > 0 && $operational === $count;
     }
 }

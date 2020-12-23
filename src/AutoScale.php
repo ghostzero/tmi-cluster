@@ -55,6 +55,8 @@ class AutoScale
                 }
             }
 
+            $this->setMinimumScale($supervisor->processes()->count());
+
             $this->releaseStaleSupervisors($supervisor);
         } catch (Throwable $exception) {
             $supervisor->output(null, $exception->getTraceAsString());
@@ -62,7 +64,7 @@ class AutoScale
     }
 
     /**
-     * Get the Redis connection instance.
+     * Get the Redis connecDashbtion instance.
      *
      * @return Connection|ClientInterface
      */
@@ -92,19 +94,24 @@ class AutoScale
         }
     }
 
-    private function shouldScaleOut(float $usage): bool
+    public function shouldScaleOut(float $usage): bool
     {
-        return $usage > config('tmi-cluster.auto_scale.thresholds.scale_out');
+        return $usage > config('tmi-cluster.auto_scale.thresholds.scale_out', 70);
     }
 
-    private function shouldScaleIn(float $usage): bool
+    public function shouldRestoreScale(): bool
     {
-        return $usage < config('tmi-cluster.auto_scale.thresholds.scale_in');
+        return config('tmi-cluster.auto_scale.restore', true);
+    }
+
+    public function shouldScaleIn(float $usage): bool
+    {
+        return $usage < config('tmi-cluster.auto_scale.thresholds.scale_in', 50);
     }
 
     private function getCurrentAverageChannelUsage(Collection $c)
     {
-        $channelLimit = config('tmi-cluster.auto_scale.thresholds.channels');
+        $channelLimit = config('tmi-cluster.auto_scale.thresholds.channels', 50);
         $channelCount = $c->sum();
         $serverCount = $c->count() + 1;
 
@@ -113,7 +120,7 @@ class AutoScale
 
     private function getNextAverageChannelUsage(Collection $c)
     {
-        $channelLimit = config('tmi-cluster.auto_scale.thresholds.channels');
+        $channelLimit = config('tmi-cluster.auto_scale.thresholds.channels', 50);
         $channelCount = $c->sum();
         $serverCount = $c->count();
 
@@ -129,7 +136,7 @@ class AutoScale
         $count = $supervisor->processes()->count();
         $supervisor->output(null, 'Scale out: ' . ($count + 1));
 
-        if ($count >= config('tmi-cluster.auto_scale.processes.max')) {
+        if ($count >= config('tmi-cluster.auto_scale.processes.max', 25)) {
             return; // skip scale out, keep a maximum of instance
         }
 
@@ -140,7 +147,7 @@ class AutoScale
     {
         $count = $supervisor->processes()->count();
 
-        if ($count <= config('tmi-cluster.auto_scale.processes.min')) {
+        if ($count <= $this->getMinimumScale()) {
             return; // skip scale in, keep a minimum of instance
         }
 
@@ -157,5 +164,20 @@ class AutoScale
             });
 
         return $c;
+    }
+
+    public function getMinimumScale(): int
+    {
+        $default = config('tmi-cluster.auto_scale.processes.min', 2);
+        if (!$this->shouldRestoreScale()) {
+            return $default;
+        }
+
+        return $this->connection()->get('auto-scale:minimum-scale') ?? $default;
+    }
+
+    public function setMinimumScale(int $scale)
+    {
+        return $this->connection()->set('auto-scale:minimum-scale', $scale, 'EX', 60);
     }
 }

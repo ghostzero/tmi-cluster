@@ -5,15 +5,23 @@ namespace GhostZero\TmiCluster\Tests;
 
 use GhostZero\TmiCluster\Facades\TmiCluster;
 use GhostZero\TmiCluster\Providers\TmiClusterServiceProvider;
+use Illuminate\Contracts\Redis\Connection;
+use Illuminate\Contracts\Redis\Factory;
+use Illuminate\Foundation\Application;
+use Predis\ClientInterface;
 
 class TestCase extends \Orchestra\Testbench\TestCase
 {
+    /**
+     * Setup the test environment.
+     */
     public function setUp(): void
     {
         parent::setUp();
         // additional setup
 
-        $this->artisan('migrate')->run();
+        //$this->artisan('migrate')->run();
+        $this->flushRedis();
     }
 
     protected function getPackageProviders($app)
@@ -30,14 +38,27 @@ class TestCase extends \Orchestra\Testbench\TestCase
         ];
     }
 
+    /**
+     * Define environment setup.
+     *
+     * @param  Application  $app
+     * @return void
+     */
     protected function getEnvironmentSetUp($app)
     {
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [
-            'driver' => 'sqlite',
+            'driver'   => 'sqlite',
             'database' => ':memory:',
-            'prefix' => '',
+            'prefix'   => '',
         ]);
+    }
+
+    protected function flushRedis()
+    {
+        /** @var ClientInterface $connection */
+        $connection = app(Factory::class)->connection('tmi-cluster');
+        $connection->flushdb();
     }
 }

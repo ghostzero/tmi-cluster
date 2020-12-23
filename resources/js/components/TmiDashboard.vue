@@ -125,20 +125,8 @@ export default {
   computed: {
     operational: function () {
       if (!this.statistics) return false;
-
-      let operational = true;
-
-      this.statistics.supervisors.forEach(s => {
-        s.processes.forEach(p => {
-          if (p.state !== 'connected') {
-            operational = false;
-          }
-        });
-      });
-
-      this.updateIcon(operational);
-
-      return operational;
+      this.updateIcon(this.statistics.operational);
+      return this.statistics.operational;
     }
   },
 

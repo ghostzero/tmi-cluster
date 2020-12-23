@@ -55,7 +55,7 @@ class TmiCluster
         static::$email = $email;
     }
 
-    public static function routeSlackNotificationsTo(string $url, string $channel = null)
+    public static function routeSlackNotificationsTo(string $url, string $channel = null): void
     {
         static::$slackWebhookUrl = $url;
         static::$slackChannel = $channel;
@@ -76,6 +76,7 @@ class TmiCluster
             Route::get('', [Controllers\DashboardController::class, 'index']);
             Route::post('statistics', [Controllers\DashboardController::class, 'statistics']);
             Route::get('statistics', [Controllers\DashboardController::class, 'statistics']);
+            Route::get('health', [Controllers\DashboardController::class, 'health']);
             Route::get('metrics', [Controllers\MetricsController::class, 'handle']);
         });
     }

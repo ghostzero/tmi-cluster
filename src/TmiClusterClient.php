@@ -9,6 +9,7 @@ use GhostZero\Tmi\ClientOptions;
 use GhostZero\Tmi\Events\Event;
 use GhostZero\Tmi\Events\Inspector\InspectorReadyEvent;
 use GhostZero\Tmi\Events\Twitch\MessageEvent;
+use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
@@ -190,7 +191,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         $this->working = false;
 
         // evacuate all current channels to a new process
-        TmiCluster::joinNextServer(array_keys($this->client->getChannels()), [$this->model->getKey()]);
+        app(ChannelDistributor::class)->join(array_keys($this->client->getChannels()), [$this->model->getKey()]);
         $this->log(sprintf('TMI Client evacuated! Migrated: %s', count($this->client->getChannels())));
 
         $this->exit($status);
