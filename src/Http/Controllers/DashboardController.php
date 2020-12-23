@@ -16,7 +16,7 @@ class DashboardController extends Controller
         return view('tmi-cluster::dashboard.index');
     }
 
-    public function operational(): Response
+    public function health(): Response
     {
         if ($this->isOperational(Supervisor::query()->get())) {
             return response('', 204);
