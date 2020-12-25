@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Tests\TestCases;
 
 use Carbon\CarbonInterface;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
@@ -12,7 +13,7 @@ use GhostZero\TmiCluster\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
-class JoinHandlerTest extends TestCase
+class ChannelDistributorTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -25,7 +26,7 @@ class JoinHandlerTest extends TestCase
 
     public function testChannelGotRejectedWithUnhealthyServers(): void
     {
-        $this->createSupervisor(now()->subMinute(), SupervisorProcess::STATE_CONNECTED);
+        $this->createSupervisor(now()->subSeconds(5), SupervisorProcess::STATE_CONNECTED);
         $this->createSupervisor(now(), SupervisorProcess::STATE_INITIALIZE);
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
@@ -68,6 +69,29 @@ class JoinHandlerTest extends TestCase
         $this->assertGotQueued($result, 5);
     }
 
+    public function testChannelGotResolvedAfterInactiveSupervisor(): void
+    {
+        // join server normally
+        $uuid = $this->createSupervisor(now()->subSeconds(2), SupervisorProcess::STATE_CONNECTED, [
+            'ghostdemouser', // this channel got already connected
+        ]);
+        $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
+        self::assertEquals(['rejected' => [], 'resolved' => ['ghostzero' => $uuid], 'ignored' => []], $result);
+
+        // let's kill all servers and re-join all lost channels into some fresh servers
+        sleep(1);
+        $newUuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
+        $result = $this->getChannelDistributor()->flushStale([
+            'ghostdemouser'
+        ], [$uuid]); // this simulates our flush stale
+
+        // check if our previous server got restored
+        self::assertEquals(['rejected' => [], 'resolved' => [
+            'ghostzero' => $newUuid, // got restored from our lost queue
+            'ghostdemouser' => $newUuid, // got restored from the flush stale
+        ], 'ignored' => []], $result);
+    }
+
     private function getChannelDistributor(): ChannelDistributor
     {
         return app(RedisChannelManager::class);
@@ -95,7 +119,7 @@ class JoinHandlerTest extends TestCase
         return (string)$process->getKey();
     }
 
-    private function assertGotQueued(array $result, int $expectedCount)
+    private function assertGotQueued(array $result, int $expectedCount): void
     {
         $processIds = array_unique(array_merge(
             array_values($result['rejected']),
@@ -108,10 +132,6 @@ class JoinHandlerTest extends TestCase
         self::assertCount($expectedCount, $commands);
     }
 
-    /**
-     * @param array $processIds
-     * @return array
-     */
     private function getPendingCommands(array $processIds): array
     {
         /** @var CommandQueue $commandQueue */
@@ -119,7 +139,7 @@ class JoinHandlerTest extends TestCase
 
         $commands = [];
         foreach ($processIds as $processId) {
-            $commands[] = $commandQueue->pending($processId);
+            $commands[] = $commandQueue->pending(ClusterClient::getQueueName($processId, ClusterClient::QUEUE_INPUT));
         }
         $commands = array_merge(...$commands);
         return $commands;

@@ -4,8 +4,10 @@ namespace GhostZero\TmiCluster\Contracts;
 
 use Closure;
 
-interface ClusterClient
+abstract class ClusterClient
 {
+    public const QUEUE_INPUT = 'input';
+
     /**
      * Starts a new TMI Client process.
      *
@@ -13,7 +15,12 @@ interface ClusterClient
      * @param Closure $output
      * @return self
      */
-    public static function make(ClusterClientOptions $options, Closure $output): self;
+    abstract public static function make(ClusterClientOptions $options, Closure $output): self;
 
-    public function connect(): void;
+    public static function getQueueName(string $id, string $name): string
+    {
+        return $id . '-' . $name;
+    }
+
+    abstract public function connect(): void;
 }

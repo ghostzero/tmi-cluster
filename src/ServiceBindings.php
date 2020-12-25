@@ -16,7 +16,7 @@ trait ServiceBindings
         // General services...
         AutoScale::class,
         AutoCleanup::class,
-        Contracts\ClusterClient::class => TmiClusterClient::class,
+        TmiClusterClient::class,
         Twitch::class,
 
         // Repository services...

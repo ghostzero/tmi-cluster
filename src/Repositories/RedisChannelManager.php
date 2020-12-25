@@ -2,39 +2,71 @@
 
 namespace GhostZero\TmiCluster\Repositories;
 
+use GhostZero\Tmi\Channel;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\SupervisorJoinHandler;
 use GhostZero\TmiCluster\Lock;
 use GhostZero\TmiCluster\Models;
 use GhostZero\TmiCluster\Process\Process;
 use GhostZero\TmiCluster\Supervisor;
-use GhostZero\TmiCluster\Traits\JoinQueuedChannels;
+use GhostZero\TmiCluster\Support\Arr;
 use Illuminate\Contracts\Redis\LimiterTimeoutException;
 use Illuminate\Support\Collection;
 use stdClass;
 
 class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
 {
-    use JoinQueuedChannels;
-
+    private CommandQueue $commandQueue;
     private Lock $lock;
 
     public function __construct()
     {
+        $this->commandQueue = app(CommandQueue::class);
         $this->lock = app(Lock::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function join(array $channels, array $staleIds = []): void
+    {
+        $this->commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
+            'channels' => array_map(static fn($channel) => Channel::sanitize($channel), $channels),
+            'staleIds' => $staleIds,
+        ]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function joinNow(array $channels, array $staleIds = []): array
+    {
+        $commands = $this->commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
+
+        [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
+
+        return $this->joinOrQueue($channels, $staleIds);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function flushStale(array $channels, array $staleIds = []): array
+    {
+        $channels = $this->restoreQueuedChannelsFromStaleQueues($staleIds, $channels);
+
+        return $this->joinNow($channels);
     }
 
     public function handle(Supervisor $supervisor, array $channels): void
     {
         $uuids = $supervisor->processes()->map(fn(Process $process) => $process->getUuid());
 
-        /** @var CommandQueue $commandQueue */
-        $commandQueue = app(CommandQueue::class);
-
         foreach ($channels as $channel) {
             $uuid = $uuids->shuffle()->shift();
-            $commandQueue->push(sprintf('%s-input', $uuid), CommandQueue::COMMAND_TMI_JOIN, [
+            $this->commandQueue->push(sprintf('%s-input', $uuid), CommandQueue::COMMAND_TMI_JOIN, [
                 'channel' => $channel,
             ]);
             $this->lock->release($this->getKey($channel));
@@ -46,16 +78,15 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
      *
      * @param array $channels
      * @param array $staleIds
-     * @param CommandQueue $commandQueue
      * @return array
      * @throws LimiterTimeoutException
      */
-    private function joinOrQueue(array $channels, array $staleIds, CommandQueue $commandQueue): array
+    private function joinOrQueue(array $channels, array $staleIds): array
     {
         $result = ['rejected' => [], 'resolved' => [], 'ignored' => []];
 
         $processes = Models\SupervisorProcess::query()
-            ->whereTime('last_ping_at', '>', now()->subSeconds(10))
+            ->whereTime('last_ping_at', '>', now()->subSeconds(3))
             ->whereIn('state', [Models\SupervisorProcess::STATE_CONNECTED])
             ->whereNotIn('id', $staleIds)
             ->get()
@@ -68,7 +99,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             })->sortBy('channel_sum');
 
         if ($processes->isEmpty()) {
-            $result = $this->reject($result, $channels, $staleIds, $commandQueue);
+            $result = $this->reject($result, $channels, $staleIds);
 
             return $this->result($result);
         }
@@ -89,19 +120,19 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
                 ->every(config('tmi-cluster.throttle.join.every', 10))
                 ->take($take)
                 ->then(
-                    fn() => $this->resolve($result, $chunk, $staleIds, $commandQueue, $processes),
-                    fn() => $this->reject($result, $chunk, $staleIds, $commandQueue)
+                    fn() => $this->resolve($result, $chunk, $staleIds, $processes),
+                    fn() => $this->reject($result, $chunk, $staleIds)
                 );
         }
 
         return $this->result($result);
     }
 
-    private function reject(array $result, array $channels, array $staleIds, CommandQueue $commandQueue): array
+    private function reject(array $result, array $channels, array $staleIds): array
     {
         // we didn't get any server, that is ready to join our channels
         // so we move them to our lost and found channel queue
-        $commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
+        $this->commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
             'channels' => $channels,
             'staleIds' => $staleIds,
         ]);
@@ -111,11 +142,11 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         return $result;
     }
 
-    private function resolve(array $result, array $channels, array $staleIds, CommandQueue $commandQueue, Collection $processes): array
+    private function resolve(array $result, array $channels, array $staleIds, Collection $processes): array
     {
         foreach ($channels as $channel) {
             if ($process = $this->getProcess($processes, $channel)) {
-                if($process instanceof stdClass) {
+                if ($process instanceof stdClass) {
                     $result['ignored'][$channel] = $this->increment($process, $channel);
                 } else {
                     $result['ignored'][$channel] = $process;
@@ -130,7 +161,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             // acquire lock to prevent double join
             $this->lock->connection()->set($this->getKey($channel), $nextProcess->id, 'EX', 60, 'NX');
 
-            $commandQueue->push($nextProcess->id, CommandQueue::COMMAND_TMI_JOIN, [
+            $this->commandQueue->push(ClusterClient::getQueueName($nextProcess->id, ClusterClient::QUEUE_INPUT), CommandQueue::COMMAND_TMI_JOIN, [
                 'channel' => $channel,
                 'staleIds' => $staleIds,
             ]);
@@ -172,5 +203,23 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         $process->channels[] = $channel;
 
         return $process->id;
+    }
+
+    private function restoreQueuedChannelsFromStaleQueues(array $staleIds, array $channels): array
+    {
+        foreach ($staleIds as $staleId) {
+            $commands = $this->commandQueue->pending($queueName = ClusterClient::getQueueName($staleId, ClusterClient::QUEUE_INPUT));
+            foreach ($commands as $command) {
+                if ($command->command !== CommandQueue::COMMAND_TMI_JOIN) {
+                    $this->commandQueue->push($queueName, $command->command, (array)$command->options);
+                    continue;
+                }
+
+                $this->lock->release($this->getKey($command->options->channel));
+                $channels[] = $command->options->channel;
+            }
+        }
+
+        return $channels;
     }
 }

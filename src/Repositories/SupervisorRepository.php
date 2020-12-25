@@ -65,7 +65,7 @@ class SupervisorRepository implements Repository
             }
         });
 
-        app(ChannelDistributor::class)->joinNow($channels, $staleIds);
+        app(ChannelDistributor::class)->flushStale($channels, $staleIds);
     }
 
     private function deleteStaleProcess($process): void
