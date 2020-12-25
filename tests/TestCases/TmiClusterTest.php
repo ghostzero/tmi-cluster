@@ -5,9 +5,12 @@ namespace GhostZero\TmiCluster\Tests\TestCases;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class TmiClusterTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testSupervisor(): void
     {
         /** @var Supervisor $supervisor */
@@ -30,7 +33,7 @@ class TmiClusterTest extends TestCase
             fwrite(STDERR, print_r($line, TRUE));
         });
 
-        self::assertStringStartsWith(gethostname(), $supervisor->model->name);
+        self::assertStringStartsWith(gethostname(), $supervisor->model->id);
 
         $supervisor->scale(2);
         $supervisor->loop();
