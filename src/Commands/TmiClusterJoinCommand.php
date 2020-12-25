@@ -2,7 +2,7 @@
 
 namespace GhostZero\TmiCluster\Commands;
 
-use GhostZero\TmiCluster\TmiCluster;
+use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use Illuminate\Console\Command;
 
 class TmiClusterJoinCommand extends Command
@@ -28,8 +28,16 @@ class TmiClusterJoinCommand extends Command
      */
     public function handle(): int
     {
-        TmiCluster::joinNextServer([$this->argument('channel')]);
+        $channels = [$this->argument('channel')];
+        $result = $this->getChannelDistributor()->joinNow($channels);
 
-        return 0;
+        print_r($result);
+
+        return 1;
+    }
+
+    private function getChannelDistributor(): ChannelDistributor
+    {
+        return app(ChannelDistributor::class);
     }
 }

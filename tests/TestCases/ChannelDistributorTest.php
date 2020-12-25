@@ -21,7 +21,7 @@ class ChannelDistributorTest extends TestCase
     {
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => ['ghostzero'], 'resolved' => [], 'ignored' => []], $result);
+        self::assertEquals(['rejected' => ['#ghostzero'], 'resolved' => [], 'ignored' => []], $result);
     }
 
     public function testChannelGotRejectedWithUnhealthyServers(): void
@@ -31,7 +31,7 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => ['ghostzero'], 'resolved' => [], 'ignored' => []], $result);
+        self::assertEquals(['rejected' => ['#ghostzero'], 'resolved' => [], 'ignored' => []], $result);
     }
 
     public function testChannelGotResolvedDueActiveServer(): void
@@ -40,7 +40,7 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => ['ghostzero' => $uuid], 'ignored' => []], $result);
+        self::assertEquals(['rejected' => [], 'resolved' => ['#ghostzero' => $uuid], 'ignored' => []], $result);
     }
 
     public function testChannelGotIgnoredDueAlreadyJoined(): void
@@ -49,7 +49,7 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => ['ghostzero' => $uuid], 'ignored' => []], $result);
+        self::assertEquals(['rejected' => [], 'resolved' => ['#ghostzero' => $uuid], 'ignored' => []], $result);
 
         $uuid2 = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
@@ -58,12 +58,12 @@ class ChannelDistributorTest extends TestCase
         $result = $this->getChannelDistributor()->joinNow(['ghostzero', 'test', 'test2', 'test3', 'test4'], []);
 
         self::assertEquals(['rejected' => [], 'resolved' => [
-            'test' => $uuid2, // because the second process has the lowest channels amount
-            'test2' => $uuid, // because the first process has the lowest channels amount
-            'test3' => $uuid2, // because the second process has the lowest channels amount
-            'test4' => $uuid, // because the first process has the lowest channels amount
+            '#test' => $uuid2, // because the second process has the lowest channels amount
+            '#test2' => $uuid, // because the first process has the lowest channels amount
+            '#test3' => $uuid2, // because the second process has the lowest channels amount
+            '#test4' => $uuid, // because the first process has the lowest channels amount
         ], 'ignored' => [
-            'ghostzero' => $uuid, // because they got already joined in the first server
+            '#ghostzero' => $uuid, // because they got already joined in the first server
         ]], $result);
 
         $this->assertGotQueued($result, 5);
@@ -76,19 +76,19 @@ class ChannelDistributorTest extends TestCase
             'ghostdemouser', // this channel got already connected
         ]);
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
-        self::assertEquals(['rejected' => [], 'resolved' => ['ghostzero' => $uuid], 'ignored' => []], $result);
+        self::assertEquals(['rejected' => [], 'resolved' => ['#ghostzero' => $uuid], 'ignored' => []], $result);
 
         // let's kill all servers and re-join all lost channels into some fresh servers
         sleep(1);
         $newUuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
         $result = $this->getChannelDistributor()->flushStale([
-            'ghostdemouser'
+            '#ghostdemouser'
         ], [$uuid]); // this simulates our flush stale
 
         // check if our previous server got restored
         self::assertEquals(['rejected' => [], 'resolved' => [
-            'ghostzero' => $newUuid, // got restored from our lost queue
-            'ghostdemouser' => $newUuid, // got restored from the flush stale
+            '#ghostzero' => $newUuid, // got restored from our lost queue
+            '#ghostdemouser' => $newUuid, // got restored from the flush stale
         ], 'ignored' => []], $result);
     }
 
