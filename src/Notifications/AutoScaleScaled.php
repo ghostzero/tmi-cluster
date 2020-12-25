@@ -53,14 +53,16 @@ class AutoScaleScaled extends Notification
             ->from('TMI Cluster')
             ->to(TmiCluster::$slackChannel)
             //->image('... add tmi cluster image url')
-            ->error()
-            ->content('Oh no! Something needs your attention.')
+            ->info()
             ->attachment(function ($attachment) {
-                $attachment->title('TMI Cluster: AutoScale Notification')
-                    ->content(sprintf(
-                        '[TMI Cluster] Message: %s, Description: %s, Event: %s, Cause: %s',
-                        $this->message, $this->description, $this->event, $this->cause
-                    ));
+                $attachment
+                    ->title('TMI Cluster: AutoScale Notification')
+                    ->fields([
+                        'Message' => $this->message,
+                        'Description' => $this->description,
+                        'Event' => $this->event,
+                        'Cause' => $this->cause,
+                    ]);
             });
     }
 

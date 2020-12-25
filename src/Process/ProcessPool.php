@@ -140,9 +140,9 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
             'SUPERVISOR_PROCESS_LAUNCH',
             sprintf(
                 'At %s an instance was started in response to a difference between desired and actual capacity, increasing the capacity from %s to %s.',
+                date('Y-m-d H:i:s'),
                 $count = $this->count(),
                 $count + 1,
-                date('Y-m-d H:i:s')
             )
         ));
 
