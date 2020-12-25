@@ -2,20 +2,18 @@
 
 namespace GhostZero\TmiCluster\Tests\TestCases;
 
-use Carbon\CarbonInterface;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
-use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Repositories\RedisChannelManager;
 use GhostZero\TmiCluster\Tests\TestCase;
+use GhostZero\TmiCluster\Tests\Traits\CreatesSupervisors;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 
 class ChannelDistributorTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, CreatesSupervisors;
 
     public function testAsyncChannelJoin(): void
     {
@@ -112,28 +110,6 @@ class ChannelDistributorTest extends TestCase
     private function getChannelDistributor(): ChannelDistributor
     {
         return app(RedisChannelManager::class);
-    }
-
-    private function createSupervisor(CarbonInterface $lastPingAt, string $state, array $channels = []): string
-    {
-        /** @var Supervisor $supervisor */
-        $supervisor = Supervisor::query()->forceCreate([
-            'id' => Str::uuid(),
-            'last_ping_at' => $lastPingAt,
-            'metrics' => [],
-            'options' => ['nice' => 0]
-        ]);
-
-        /** @var SupervisorProcess $process */
-        $process = $supervisor->processes()->forceCreate([
-            'id' => Str::uuid(),
-            'supervisor_id' => $supervisor->getKey(),
-            'state' => $state,
-            'channels' => $channels,
-            'last_ping_at' => $lastPingAt,
-        ]);
-
-        return (string)$process->getKey();
     }
 
     private function assertGotQueued(array $result, int $expectedCount): void

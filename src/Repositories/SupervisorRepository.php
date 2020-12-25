@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster\Repositories;
 
 use DomainException;
-use Exception;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository as Repository;
 use GhostZero\TmiCluster\Models;
@@ -47,37 +46,19 @@ class SupervisorRepository implements Repository
         $channels = [];
         $staleIds = [];
 
-        $this->all()->each(function (Models\Supervisor $supervisor) use (&$channels, &$staleIds) {
-            if ($supervisor->is_stale) {
-                try {
-                    $staleIds[] = $supervisor->getKey();
-                    $supervisor->processes()->each(function (Models\SupervisorProcess $process) use (&$channels, &$staleIds) {
-                        $staleIds[] = $process->getKey();
-                        $channels = array_merge($channels, $process->channels);
-                        $this->deleteStaleProcess($process);
-                    });
-                    $supervisor->delete();
-                } catch (Exception $e) {
-                    throw $e;
-                }
-            } else {
-                $supervisor->processes()->each(fn($process) => $this->deleteIfStaleProcess($process));
-            }
-        });
+        $this->all()
+            ->filter(fn(Models\Supervisor $supervisor) => $supervisor->is_stale)
+            ->each(fn(Models\Supervisor $supervisor) => $supervisor->delete());
 
-        app(ChannelDistributor::class)->flushStale($channels, $staleIds);
-    }
+        Models\SupervisorProcess::query()->get()
+            ->filter(fn(Models\SupervisorProcess $process) => $process->is_stale)
+            ->each(function (Models\SupervisorProcess $process) use (&$channels, &$staleIds) {
+                $staleIds[] = $process->getKey();
+                $channels[] = $process->channels;
+                $process->delete();
+            });
 
-    private function deleteStaleProcess($process): void
-    {
-        $process->delete();
-    }
-
-    private function deleteIfStaleProcess(Models\SupervisorProcess $process): void
-    {
-        if ($process->is_stale) {
-            $this->deleteStaleProcess($process);
-        }
+        app(ChannelDistributor::class)->flushStale(array_merge(...$channels), $staleIds);
     }
 
     private function generateUniqueSupervisorKey(int $length = 4): string
