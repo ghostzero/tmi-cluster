@@ -32,7 +32,7 @@ use Throwable;
  * Class TmiClusterClient
  * @package GhostZero\TmiCluster
  */
-class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminable
+class TmiClusterClient extends ClusterClient implements Pausable, Restartable, Terminable
 {
     use ListensForSignals;
 
@@ -161,11 +161,6 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
         ]);
     }
 
-    private function getQueueName(string $string): string
-    {
-        return $this->options->getUuid() . '-' . $string;
-    }
-
     public function connect(): void
     {
         $this->client->connect();
@@ -211,7 +206,7 @@ class TmiClusterClient implements ClusterClient, Pausable, Restartable, Terminab
 
     private function processPendingCommands(): void
     {
-        $commands = $this->commandQueue->pending($this->getQueueName('input'));
+        $commands = $this->commandQueue->pending(ClusterClient::getQueueName($this->options->getUuid(), ClusterClient::QUEUE_INPUT));
         $commands = array_merge($commands, $this->commandQueue->pending(CommandQueue::NAME_ANY_SUPERVISOR));
         foreach ($commands as $command) {
             $this->metrics[self::METRIC_COMMAND_QUEUE_COMMANDS]++;
