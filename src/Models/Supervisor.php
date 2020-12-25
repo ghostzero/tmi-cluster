@@ -43,6 +43,4 @@ class Supervisor extends Model
     {
         return $this->hasMany(SupervisorProcess::class);
     }
-
-
 }
