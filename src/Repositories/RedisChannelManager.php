@@ -40,9 +40,11 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
 
     /**
      * @inheritdoc
+     * @throws LimiterTimeoutException
      */
     public function joinNow(array $channels, array $staleIds = []): array
     {
+        $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $commands = $this->commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
         [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
@@ -52,9 +54,11 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
 
     /**
      * @inheritdoc
+     * @throws LimiterTimeoutException
      */
     public function flushStale(array $channels, array $staleIds = []): array
     {
+        $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $channels = $this->restoreQueuedChannelsFromStaleQueues($staleIds, $channels);
 
         return $this->joinNow($channels);
@@ -179,7 +183,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         return $result;
     }
 
-    private function getKey(string $channel)
+    private function getKey(string $channel): string
     {
         return sprintf('channel-manager:join-%s', $channel);
     }
