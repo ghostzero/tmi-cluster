@@ -198,12 +198,12 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             return $id;
         }
 
-        return $processes->filter(fn($x) => in_array($channel, $x->channels))->first();
+        return $processes->filter(fn($x) => in_array($channel, $x->channels, true))->first();
     }
 
     private function increment(stdClass $process, $channel): string
     {
-        $process->channel_sum += 1;
+        ++$process->channel_sum;
         $process->channels[] = $channel;
 
         return $process->id;
