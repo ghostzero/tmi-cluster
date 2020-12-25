@@ -24,12 +24,13 @@ class ChannelDistributorTest extends TestCase
 
         $uuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
-        $result = $this->getChannelDistributor()->joinNow([], []);
+        $result = $this->getChannelDistributor()->joinNow(['test4'], []);
 
         self::assertEquals(['rejected' => [], 'resolved' => [
             '#test1' => $uuid,
             '#test2' => $uuid,
             '#test3' => $uuid,
+            '#test4' => $uuid,
         ], 'ignored' => []], $result);
     }
 
