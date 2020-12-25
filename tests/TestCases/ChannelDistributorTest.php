@@ -17,6 +17,22 @@ class ChannelDistributorTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function testAsyncChannelJoin(): void
+    {
+        $this->getChannelDistributor()->join(['test1', 'test2']);
+        $this->getChannelDistributor()->join(['test3']);
+
+        $uuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
+
+        $result = $this->getChannelDistributor()->joinNow([], []);
+
+        self::assertEquals(['rejected' => [], 'resolved' => [
+            '#test1' => $uuid,
+            '#test2' => $uuid,
+            '#test3' => $uuid,
+        ], 'ignored' => []], $result);
+    }
+
     public function testChannelGotRejectedDueMissingServers(): void
     {
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
