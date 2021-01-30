@@ -24,7 +24,7 @@
     "ext-json": "*",
     "ext-pcntl": "*",
     "ext-posix": "*",
-    "ghostzero/tmi": "dev-master",
+    "ghostzero/tmi": "^2.0",
     "illuminate/console": "^8.1",
     "illuminate/support": "^8.1",
     "predis/predis": "^1.1",
