@@ -27,4 +27,9 @@ class ProcessOptions
     {
         return $this->supervisor;
     }
+
+    public function getTimeout(): int
+    {
+        return $this->options['timeout'] ?? 60;
+    }
 }

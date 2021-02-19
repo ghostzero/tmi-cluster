@@ -25,6 +25,8 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
     private ProcessOptions $options;
     private Closure $output;
     private Supervisor $supervisor;
+    private int $requestedScale = 0;
+    private bool $working = true;
 
     public function __construct(ProcessOptions $options, Closure $output, Supervisor $supervisor)
     {
@@ -40,7 +42,49 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
 
     public function monitor(): void
     {
-        $this->processes()->each(fn(Process $x) => $x->monitor());
+        $this->processes()->each(function (Process $process, $key) {
+            if ($process->shouldMarkForTermination()) {
+                $this->markForTermination($process);
+                $this->removeProcess($key);
+            } else {
+                $process->monitor();
+            }
+        });
+
+        $this->pruneTerminatingProcesses();
+        $this->scale($this->requestedScale);
+    }
+
+    public function pruneTerminatingProcesses()
+    {
+        $this->stopTerminatingProcessesThatAreHanging();
+        $this->terminatingProcesses = collect(
+            $this->terminatingProcesses
+        )->filter(function ($process) {
+            $filtered = $process['process']->isRunning();
+
+            if (!$filtered) {
+                event(new ProcessScaled(
+                    sprintf('Auto Scaling: Process removed'),
+                    sprintf('Terminating process instance: %s', $process['process']->getUuid()),
+                    'SUPERVISOR_PROCESS_TERMINATE',
+                    sprintf('At %s an process was removed in response of terminated process.', date('Y-m-d H:i:s'))
+                ));
+            }
+
+            return $filtered;
+        })->all();
+    }
+
+    protected function stopTerminatingProcessesThatAreHanging()
+    {
+        foreach ($this->terminatingProcesses as $process) {
+            $timeout = $this->options->getTimeout();
+
+            if ($process['terminatedAt']->addSeconds($timeout)->lte(CarbonImmutable::now())) {
+                $process['process']->stop();
+            }
+        }
     }
 
     public function processes(): Collection
@@ -57,6 +101,7 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
 
     public function scale($processes): void
     {
+        $this->requestedScale = $processes;
         $processes = max(0, (int)$processes);
 
         if ($processes === count($this->processes)) {
@@ -90,26 +135,25 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
             $this->processes, 0, $difference
         );
 
-        collect($terminatingProcesses)->each(function ($process) {
+        foreach ($terminatingProcesses as $process) {
             $this->markForTermination($process);
-        })->all();
+        }
 
         $this->removeProcesses($difference);
 
         // Finally we will call the terminate method on each of the processes that need get
         // terminated so they can start terminating. Terminating is a graceful operation
         // so any jobs they are already running will finish running before these quit.
-        collect($this->terminatingProcesses)
-            ->each(function (array $process) {
-                $process['process']->terminate();
+        foreach ($this->terminatingProcesses as $process) {
+            $process['process']->terminate();
 
-                event(new ProcessScaled(
-                    sprintf('Auto Scaling: Process terminated'),
-                    sprintf('Terminating process instance: %s', $process['process']->getUuid()),
-                    'SUPERVISOR_PROCESS_TERMINATE',
-                    sprintf('At %s an process was taken out of service in response of a scale in.', date('Y-m-d H:i:s'))
-                ));
-            });
+            event(new ProcessScaled(
+                sprintf('Auto Scaling: Process terminated'),
+                sprintf('Terminating process instance: %s', $process['process']->getUuid()),
+                'SUPERVISOR_PROCESS_TERMINATE',
+                sprintf('At %s an process was taken out of service in response of a scale in.', date('Y-m-d H:i:s'))
+            ));
+        }
     }
 
     public function markForTermination(Process $process): void
@@ -122,6 +166,13 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
     protected function removeProcesses(int $count): void
     {
         array_splice($this->processes, 0, $count);
+
+        $this->processes = array_values($this->processes);
+    }
+
+    protected function removeProcess($key): void
+    {
+        unset($this->processes[$key]);
 
         $this->processes = array_values($this->processes);
     }

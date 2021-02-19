@@ -19,6 +19,11 @@ class Process implements Pausable, Restartable, Terminable
     private Closure $output;
     private ?CarbonImmutable $restartAgainAt = null;
 
+    private const HEALTHY_EXIT_CODES = [
+        5, // IRC Client disconnected (restart).
+        6, // Exit via CommandQueue (restart).
+    ];
+
     public function __construct(SystemProcess $systemProcess, string $uuid)
     {
         $this->systemProcess = $systemProcess;
@@ -31,6 +36,11 @@ class Process implements Pausable, Restartable, Terminable
     public function getUuid(): string
     {
         return $this->uuid;
+    }
+
+    public function isRunning(): bool
+    {
+        return $this->systemProcess->isRunning();
     }
 
     public function monitor(): void
@@ -123,5 +133,15 @@ class Process implements Pausable, Restartable, Terminable
         $this->output = $callback;
 
         return $this;
+    }
+
+
+    public function shouldMarkForTermination(): bool
+    {
+        if ($exitCode = $this->systemProcess->getExitCode()) {
+            return !in_array($this->systemProcess->getExitCode(), self::HEALTHY_EXIT_CODES);
+        }
+
+        return false;
     }
 }

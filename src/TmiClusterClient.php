@@ -26,8 +26,9 @@ use Throwable;
  * Exit Codes:
  *  3 - ModelNotFoundException: Server started with unknown uuid.
  *  4 - ModelNotFoundException: Someone killed the model.
- *  5 - IRC Client disconnected.
- *  5 - Exit via CommandQueue.
+ *  5 - IRC Client disconnected (restart).
+ *  6 - Exit via CommandQueue (restart).
+ *  7 - Debug exit.
  *
  * Class TmiClusterClient
  * @package GhostZero\TmiCluster
