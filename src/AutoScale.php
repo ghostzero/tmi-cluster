@@ -173,7 +173,7 @@ class AutoScale
             return $default;
         }
 
-        return $this->connection()->get('auto-scale:minimum-scale') ?? $default;
+        return max($this->connection()->get('auto-scale:minimum-scale') ?? $default, $default);
     }
 
     public function setMinimumScale(int $scale)
