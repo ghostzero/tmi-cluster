@@ -5,6 +5,7 @@ namespace GhostZero\TmiCluster\Listeners;
 use GhostZero\TmiCluster\Lock;
 use GhostZero\TmiCluster\TmiCluster;
 use Illuminate\Support\Facades\Notification;
+use Throwable;
 
 class SendNotification
 {
@@ -20,11 +21,15 @@ class SendNotification
             return;
         }
 
-        Notification::route('slack', TmiCluster::$slackWebhookUrl)
-            ->route('nexmo', TmiCluster::$smsNumber)
-            ->route('mail', TmiCluster::$email)
-            ->notify($notification);
+        try {
+            Notification::route('slack', TmiCluster::$slackWebhookUrl)
+                ->route('nexmo', TmiCluster::$smsNumber)
+                ->route('mail', TmiCluster::$email)
+                ->notify($notification);
 
-        $event->sent = true;
+            $event->sent = true;
+        } catch (Throwable $exception) {
+            $event->sent = false;
+        }
     }
 }
