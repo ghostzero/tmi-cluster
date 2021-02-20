@@ -97,7 +97,7 @@
                             <tr v-for="result in results.data">
                                 <th scope="row" style="width: 30px; padding-right: 0;">
                                     <img :src="result.avatar_url" class="img-fluid rounded-circle float-start"
-                                         alt="avatar">
+                                         alt="">
                                 </th>
                                 <th scope="row">{{ result.channel }}</th>
                                 <td>{{ result.process.state }}</td>
