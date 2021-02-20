@@ -14,4 +14,6 @@ let mix = require('laravel-mix');
 mix.js('resources/js/tmi-cluster.js', 'public')
     .sass('resources/scss/tmi-cluster.scss', 'public')
     .setPublicPath('public')
-    .version();
+    .copyDirectory('public', '../tmi-cluster-example/public/vendor/tmi-cluster') // development
+    .version()
+    .disableNotifications();

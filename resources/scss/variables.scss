@@ -20,6 +20,21 @@ $body-bg:                   $white;
 $body-color:                #150130;
 
 // Table
-$table-dark-bg: #250459;
-$table-head-bg: $primary;
-$table-head-color: $white;
+.thead-primary {
+  background-color: $primary;
+  color: $white;
+}
+
+.thead-secondary {
+  background-color: #250459;
+  color: $white;
+}
+
+// Grid containers
+
+$container-max-widths: (
+        sm: 540px,
+        md: 720px,
+        lg: 960px,
+        xl: 1140px
+) !default;
