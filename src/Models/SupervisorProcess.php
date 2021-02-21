@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster\Models;
 
 use Carbon\CarbonInterface;
+use GhostZero\TmiCluster\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Supervisor supervisor
  * @property CarbonInterface last_ping_at
  * @property bool is_stale
+ * @property string memory_usage
  * @property array|null metrics
  */
 class SupervisorProcess extends Model
@@ -45,5 +47,10 @@ class SupervisorProcess extends Model
     {
         // we require at least 60 seconds for our restart cooldown
         return $this->last_ping_at->diffInSeconds() >= 90;
+    }
+
+    public function getMemoryUsageAttribute(): string
+    {
+        return isset($this->metrics['memory_usage']) ? Str::convert($this->metrics['memory_usage']) : 'N/A';
     }
 }

@@ -159,6 +159,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
     {
         return array_merge($this->metrics, [
             'channels' => count($this->client->getChannels()),
+            'memory_usage' => memory_get_usage(),
         ]);
     }
 

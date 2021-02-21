@@ -49,18 +49,19 @@ class TmiClusterListCommand extends Command
 
 
         $processes = SupervisorProcess::all()
-            ->map(function (SupervisorProcess $row) {
+            ->map(function (SupervisorProcess $process) {
                 return [
-                    $row->getKey(),
-                    $row->supervisor ? $row->supervisor->getKey() : 'N/A',
-                    $row->state,
-                    $row->last_ping_at ? $row->last_ping_at->diffInSeconds() : 'N/A',
-                    count($row->channels),
+                    $process->getKey(),
+                    $process->supervisor ? $process->supervisor->getKey() : 'N/A',
+                    $process->state,
+                    $process->last_ping_at ? $process->last_ping_at->diffInSeconds() : 'N/A',
+                    count($process->channels),
+                    $process->memory_usage,
                 ];
             });
 
         $this->table([
-            'ID', 'Supervisor', 'State', 'Last Ping', 'Channels'
+            'ID', 'Supervisor', 'State', 'Last Ping', 'Channels', 'Memory Usage'
         ], $processes);
 
         return 0;
