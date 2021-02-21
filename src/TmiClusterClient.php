@@ -16,6 +16,7 @@ use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Terminable;
+use GhostZero\TmiCluster\Events\ClusterClientRegistered;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -75,6 +76,8 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         $this->listenForSignals();
         $this->registerPeriodicTimer();
         $this->registerEvents();
+
+        event(new ClusterClientRegistered($this));
     }
 
     public static function make(ClusterClientOptions $options, Closure $output): self

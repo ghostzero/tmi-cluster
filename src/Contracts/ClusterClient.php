@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster\Contracts;
 
 use Closure;
+use GhostZero\Tmi\Client;
 
 abstract class ClusterClient
 {
@@ -23,4 +24,18 @@ abstract class ClusterClient
     }
 
     abstract public function connect(): void;
+
+    abstract public function pause(): void;
+
+    abstract public function continue(): void;
+
+    abstract public function restart(): void;
+
+    abstract public function terminate($status = 0): void;
+
+    abstract public function getClient(): Client;
+
+    abstract public function log(string $message): void;
+
+    abstract public function getUuid();
 }
