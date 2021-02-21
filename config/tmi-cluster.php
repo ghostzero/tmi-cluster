@@ -95,6 +95,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | TMI Supervisor & Process Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify the timings, we recommend to leave them on default
+    | and not to change them. You can delete this section if you always want
+    | to have the package defaults.
+    |
+    | All timings are specified in seconds.
+    |
+    */
+
+    'supervisor' => [
+        'stale' => 300,
+    ],
+
+    'process' => [
+        'stale' => 90,
+        'timeout' => 60,
+        'periodic_timer' => 2,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | TMI Cluster Auto Scaling Thresholds
     |--------------------------------------------------------------------------
     |

@@ -36,7 +36,7 @@ class Supervisor extends Model
 
     public function getIsStaleAttribute(): bool
     {
-        return $this->last_ping_at->diffInSeconds() >= 300;
+        return $this->last_ping_at->diffInSeconds() >= config('tmi-cluster.supervisor.stale', 300);
     }
 
     public function processes(): HasMany

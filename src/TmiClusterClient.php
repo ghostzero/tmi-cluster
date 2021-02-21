@@ -88,7 +88,8 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
 
     private function registerPeriodicTimer(): void
     {
-        $this->client->getLoop()->addPeriodicTimer(2, function () {
+        $interval = config('tmi-cluster.process.periodic_timer', 2);
+        $this->client->getLoop()->addPeriodicTimer($interval, function () {
             $this->processPendingSignals();
 
             $this->processPendingCommands();

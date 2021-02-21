@@ -30,6 +30,6 @@ class ProcessOptions
 
     public function getTimeout(): int
     {
-        return $this->options['timeout'] ?? 60;
+        return $this->options['timeout'] ?? config('tmi-cluster.process.timeout', 60);
     }
 }
