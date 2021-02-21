@@ -2,22 +2,15 @@
 
 namespace GhostZero\TmiCluster\Twitch;
 
-use GhostZero\TmiCluster\Twitch\Concerns\AuthenticationTrait;
-use Illuminate\Cache\RedisStore;
-use Illuminate\Cache\Repository;
-use Illuminate\Contracts\Redis\Factory as RedisFactory;
-use romanzipp\Twitch\Twitch as Base;
+use romanzipp\Twitch\Twitch as TwitchApi;
 
-class Twitch extends Base
+class Twitch
 {
-    use AuthenticationTrait;
+    protected $clientId = null;
+    protected $clientSecret = null;
 
-    private Repository $redisRepository;
-
-    public function __construct(RedisFactory $redis)
+    public function __construct()
     {
-        parent::__construct();
-
         if ($clientId = config('tmi-cluster.helix.client_id')) {
             $this->setClientId($clientId);
         }
@@ -25,8 +18,41 @@ class Twitch extends Base
         if ($clientSecret = config('tmi-cluster.helix.client_secret')) {
             $this->setClientSecret($clientSecret);
         }
-
-        $this->redisRepository = new Repository(new RedisStore($redis, '', 'tmi-cluster'));
     }
 
+    public static function isApiAvailable(): bool
+    {
+        return class_exists(TwitchApi::class);
+    }
+
+    private function setClientId(string $clientId)
+    {
+        $this->clientId = $clientId;
+    }
+
+    private function setClientSecret(string $clientSecret)
+    {
+        $this->clientSecret = $clientSecret;
+    }
+
+    public function getStreams(array $parameters): Result
+    {
+        $result = $this->getTwitchApi()->getStreams($parameters);
+        return new Result($result->success(), $result->data(), $result->error());
+    }
+
+    private function getTwitchApi(): TwitchApi
+    {
+        $twitchApi = new TwitchApi();
+
+        if ($this->clientId) {
+            $twitchApi->setClientId($this->clientId);
+        }
+
+        if ($this->clientSecret) {
+            $twitchApi->setClientSecret($this->clientSecret);
+        }
+
+        return $twitchApi;
+    }
 }

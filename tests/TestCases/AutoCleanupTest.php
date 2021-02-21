@@ -10,6 +10,10 @@ class AutoCleanupTest extends TestCase
 {
     public function testAutoCleanup(): void
     {
+        if (!Twitch::isApiAvailable()) {
+            self::markTestSkipped('The dependency romanzipp/laravel-twitch is not installed.');
+        }
+
         $diff = AutoCleanup::diff(app(Twitch::class), ['ghostzero', 'own3d_music']);
 
         self::assertEquals([

@@ -52,9 +52,9 @@ class AutoCleanup
         $this->lock->get($this->getKey($client, $channel), 300);
     }
 
-    private function shouldCleanup()
+    private function shouldCleanup(): bool
     {
-        return config('tmi-cluster.auto_cleanup.enabled');
+        return Twitch::isApiAvailable() && config('tmi-cluster.auto_cleanup.enabled');
     }
 
     public static function diff(Twitch $twitch, array $connectedChannels): array

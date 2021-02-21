@@ -9,6 +9,21 @@
       "email": "rene@preuss.io"
     }
   ],
+  "require": {
+    "php": "^7.4|^8.0",
+    "ext-json": "*",
+    "ext-pcntl": "*",
+    "ext-posix": "*",
+    "ghostzero/tmi": "^2.1",
+    "illuminate/console": "^8.1",
+    "illuminate/support": "^8.1",
+    "predis/predis": "^1.1"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^6.0",
+    "phpunit/phpunit": "^9.3",
+    "romanzipp/laravel-twitch": "^3.0"
+  },
   "autoload": {
     "psr-4": {
       "GhostZero\\TmiCluster\\": "src/"
@@ -19,24 +34,6 @@
       "GhostZero\\TmiCluster\\Tests\\": "tests/"
     }
   },
-  "require": {
-    "php": "^7.4|^8.0",
-    "ext-json": "*",
-    "ext-pcntl": "*",
-    "ext-posix": "*",
-    "ghostzero/tmi": "^2.1",
-    "illuminate/console": "^8.1",
-    "illuminate/support": "^8.1",
-    "predis/predis": "^1.1",
-    "romanzipp/laravel-twitch": "^3.0"
-  },
-  "require-dev": {
-    "orchestra/testbench": "^6.0",
-    "phpunit/phpunit": "^9.3"
-  },
-  "config": {
-    "sort-packages": true
-  },
   "extra": {
     "laravel": {
       "providers": [
@@ -46,5 +43,11 @@
         "TmiCluster": "GhostZero\\TmiCluster\\Facades\\TmiCluster"
       }
     }
+  },
+  "suggest": {
+    "romanzipp/laravel-twitch": "Rquired to use the cluster auto cleanup feature (^3.0)."
+  },
+  "config": {
+    "sort-packages": true
   }
 }
