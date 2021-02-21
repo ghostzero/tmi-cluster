@@ -17,6 +17,7 @@ use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
 use GhostZero\TmiCluster\Contracts\Terminable;
 use GhostZero\TmiCluster\Events\ClusterClientRegistered;
+use GhostZero\TmiCluster\Events\ClusterClientTerminated;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -193,6 +194,8 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         // evacuate all current channels to a new process
         app(ChannelDistributor::class)->join(array_keys($this->client->getChannels()), [$this->model->getKey()]);
         $this->log(sprintf('TMI Client evacuated! Migrated: %s', count($this->client->getChannels())));
+
+        event(new ClusterClientTerminated($this));
 
         $this->exit($status);
     }
