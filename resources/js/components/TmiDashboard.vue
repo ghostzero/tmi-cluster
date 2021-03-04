@@ -32,7 +32,7 @@
           <div class="col-12 col-md-3">
             <div class="card text-white bg-primary mb-4">
               <div class="card-body">
-                <h4 class="card-title">{{ statistics.irc_messages_per_second }}</h4>
+                <h4 class="card-title">{{ statistics.irc_messages_per_second|formatNumber }}</h4>
                 <h5 class="card-text">IRC Messages/s</h5>
               </div>
             </div>
@@ -40,7 +40,7 @@
           <div class="col-12 col-md-3">
             <div class="card text-white bg-primary-light-1 mb-4">
               <div class="card-body">
-                <h4 class="card-title">{{ statistics.irc_commands_per_second }}</h4>
+                <h4 class="card-title">{{ statistics.irc_commands_per_second|formatNumber }}</h4>
                 <h5 class="card-text">IRC Commands/s</h5>
               </div>
             </div>
@@ -48,7 +48,7 @@
           <div class="col-12 col-md-3">
             <div class="card text-white bg-primary-light-2 mb-4">
               <div class="card-body">
-                <h4 class="card-title">{{ statistics.channels }}</h4>
+                <h4 class="card-title">{{ statistics.channels|formatNumber }}</h4>
                 <h5 class="card-text">Channels</h5>
               </div>
             </div>
@@ -56,12 +56,33 @@
           <div class="col-12 col-md-3">
             <div class="card text-white bg-primary-light-3 mb-4">
               <div class="card-body">
-                <h4 class="card-title">{{ statistics.processes }}</h4>
+                <h4 class="card-title">{{ statistics.processes|formatNumber }}</h4>
                 <h5 class="card-text">Processes</h5>
               </div>
             </div>
           </div>
         </div>
+
+        <div class="row">
+          <div class="col-12 col-md-6">
+            <div class="card text-white bg-primary mb-4">
+              <div class="card-body">
+                <h4 class="card-title">{{ statistics.irc_messages|formatNumber }}</h4>
+                <h5 class="card-text">IRC Messages Processed</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="card text-white bg-primary-light-1 mb-4">
+              <div class="card-body">
+                <h4 class="card-title">{{ statistics.irc_commands|formatNumber }}</h4>
+                <h5 class="card-text">IRC Commands Processed</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <charts ref="charts"></charts>
 
         <h3 class="fw-bold mb-4">Search</h3>
 
@@ -154,7 +175,7 @@
                 <th scope="row">{{ process.id_short }}</th>
                 <td>{{ process.state }}</td>
                 <td>{{ process.last_ping_at_in_seconds }}s</td>
-                <td>{{ process.metrics.channels }}</td>
+                <td>{{ process.metrics.channels|formatNumber }}</td>
               </tr>
               </tbody>
             </table>
@@ -166,9 +187,10 @@
 </template>
 
 <script>
+import Charts from "./Charts";
 export default {
   name: "TmiDashboard",
-
+  components: {Charts},
   props: {
     assetsUrl: String,
     dashboardUrl: String,
@@ -229,13 +251,20 @@ export default {
 
     updateStatistics() {
       this.$http
-          .post(`${this.dashboardUrl}/statistics`, this.statistics)
+          .post(`https://local.own3d.pro/tmi-cluster/statistics`, this.statistics)
           .then(response => response.data)
           .then(data => {
             if (!this.channel_statistics) {
               this.channel_statistics = data;
             }
             this.statistics = data;
+
+            if (this.$refs.charts) {
+              this.$refs.charts.addData({
+                irc_messages_per_second: data.irc_messages_per_second,
+                irc_commands_per_second: data.irc_commands_per_second,
+              });
+            }
           })
           .then(() => setTimeout(this.updateStatistics, 2500))
           .catch(error => console.error(error));
