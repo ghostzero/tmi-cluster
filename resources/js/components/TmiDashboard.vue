@@ -251,7 +251,7 @@ export default {
 
     updateStatistics() {
       this.$http
-          .post(`https://local.own3d.pro/tmi-cluster/statistics`, this.statistics)
+          .post(`${this.dashboardUrl}/statistics`, this.statistics)
           .then(response => response.data)
           .then(data => {
             if (!this.channel_statistics) {
