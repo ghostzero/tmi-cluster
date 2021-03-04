@@ -30,7 +30,11 @@ class DashboardController extends Controller
         /** @var AutoScale $autoScale */
         $autoScale = app(AutoScale::class);
 
-        $supervisors = Supervisor::query()->get();
+        $withChannels = !$request->has('time');
+
+        $supervisors = Supervisor::query()
+            ->with('processes:' . implode(',', $this->getProcessColumns($withChannels)))
+            ->get();
 
         $ircMessages = $supervisors
             ->sum(function (Supervisor $supervisor) {
@@ -107,5 +111,23 @@ class DashboardController extends Controller
             });
 
         return $count > 0 && $operational === $count;
+    }
+
+    private function getProcessColumns(bool $withChannels): array
+    {
+        $columns = [
+            'id',
+            'state',
+            'metrics',
+            'created_at',
+            'last_ping_at',
+            'supervisor_id',
+        ];
+
+        if ($withChannels) {
+            $columns[] = 'channels';
+        }
+
+        return $columns;
     }
 }
