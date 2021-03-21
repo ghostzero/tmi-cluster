@@ -1,4 +1,4 @@
-# TMI Cluster for Laravel
+# TMI Cluster for Twitch Chatbots
 
 <p align="center">
   <img height="500" src="https://cdn.jsdelivr.net/gh/ghostzero/tmi-website@main/docs/images/tmi_cluster.png">
