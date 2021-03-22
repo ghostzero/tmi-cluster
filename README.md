@@ -4,6 +4,13 @@
   <img height="500" src="https://cdn.jsdelivr.net/gh/ghostzero/tmi-website@main/docs/images/tmi_cluster.png">
 </p>
 
+<p align="center">
+  <a href="https://packagist.org/packages/ghostzero/tmi-cluster"><img src="https://img.shields.io/packagist/dt/ghostzero/tmi-cluster" alt="Total Downloads"></a>
+  <a href="https://packagist.org/packages/ghostzero/tmi-cluster"><img src="https://img.shields.io/packagist/v/ghostzero/tmi-cluster" alt="Latest Stable Version"></a>
+  <a href="https://packagist.org/packages/ghostzero/tmi-cluster"><img src="https://img.shields.io/packagist/l/ghostzero/tmi-cluster" alt="License"></a>
+  <a href="https://discord.gg/qsxVMNg"><img src="https://discordapp.com/api/guilds/552952675369484301/embed.png?style=shield" alt="Discord"></a>
+</p>
+
 ## Introduction
 
 TMI Cluster is a Laravel package that smoothly enables a highly scalable IRC client cluster for Twitch. TMI Cluster consists of multiple supervisors that can be deployed on multiple hosts. The core is inspired by [Horizon](https://github.com/laravel/horizon), which handles the complex IRC process management.
