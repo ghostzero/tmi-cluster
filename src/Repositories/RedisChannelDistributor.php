@@ -51,9 +51,9 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
         $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $commands = $this->commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
-        [$staleIds, $channels, $acknowledge] = Arr::unique($commands, $staleIds, $channels, $acknowledge);
+        [$staleIds, $channels, $acknowledged] = Arr::unique($commands, $staleIds, $channels, $acknowledge);
 
-        $this->channelManager->acknowledged($acknowledge);
+        $this->channelManager->acknowledged($acknowledged);
 
         return $this->joinOrQueue($channels, $staleIds);
     }

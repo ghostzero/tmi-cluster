@@ -15,10 +15,10 @@ class CreateTmiClusterChannelsTable extends Migration
     {
         Schema::create('tmi_cluster_channels', function (Blueprint $table) {
             $table->string('id', 25)->primary();
-            $table->boolean('revoked')->default(false);
             $table->boolean('reconnect')->default(false);
+            $table->boolean('revoked')->default(false);
             $table->timestamp('acknowledged_at')->nullable();
-            $table->uuid('supervisor_process_id')->nullable();
+            $table->uuid('supervisor_process_id')->index()->nullable();
             $table->timestamps();
         });
     }
