@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster;
 
 use Closure;
-use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\Pausable;
 use GhostZero\TmiCluster\Contracts\Restartable;
@@ -34,6 +33,7 @@ class Supervisor implements Pausable, Restartable, Terminable
         $this->processPools = $this->createProcessPools();
         $this->autoScale = app(AutoScale::class);
         $this->commandQueue = app(CommandQueue::class);
+        $this->commandQueue->flush($this->model->getKey());
         $this->output = static function () {
             //
         };
@@ -206,6 +206,9 @@ class Supervisor implements Pausable, Restartable, Terminable
                     break;
                 case CommandQueue::COMMAND_SUPERVISOR_SCALE_IN:
                     $this->autoScale->scaleIn($this);
+                    break;
+                case CommandQueue::COMMAND_SUPERVISOR_TERMINATE:
+                    $this->terminate();
                     break;
                 case CommandQueue::COMMAND_TMI_JOIN:
                     $channelsToJoin[] = $command->options->channel;
