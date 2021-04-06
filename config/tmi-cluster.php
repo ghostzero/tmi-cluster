@@ -116,10 +116,6 @@ return [
         'periodic_timer' => 2,
     ],
 
-    'channel' => [
-        'stale' => 604800,
-    ],
-
     /*
     |--------------------------------------------------------------------------
     | TMI Cluster Auto Scaling Thresholds
@@ -202,6 +198,10 @@ return [
             'enabled' => true,
             'interval' => 300,
             'max_delay' => 600,
+        ],
+
+        'channel' => [
+            'stale' => 168,
         ],
     ],
 

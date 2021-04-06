@@ -33,11 +33,12 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
     /**
      * @inheritdoc
      */
-    public function join(array $channels, array $staleIds = []): void
+    public function join(array $channels, array $staleIds = [], bool $acknowledge = true): void
     {
         $this->commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
             'channels' => array_map(static fn($channel) => Channel::sanitize($channel), $channels),
             'staleIds' => $staleIds,
+            'acknowledge' => $acknowledge,
         ]);
     }
 
@@ -45,12 +46,14 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
      * @inheritdoc
      * @throws LimiterTimeoutException
      */
-    public function joinNow(array $channels, array $staleIds = []): array
+    public function joinNow(array $channels, array $staleIds = [], bool $acknowledge = true): array
     {
         $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $commands = $this->commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
-        [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
+        [$staleIds, $channels, $acknowledge] = Arr::unique($commands, $staleIds, $channels, $acknowledge);
+
+        $this->channelManager->acknowledged($acknowledge);
 
         return $this->joinOrQueue($channels, $staleIds);
     }
@@ -64,14 +67,12 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
         $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $channels = $this->restoreQueuedChannelsFromStaleQueues($staleIds, $channels);
 
-        return $this->joinNow($channels);
+        return $this->joinNow($channels, $staleIds, false);
     }
 
     public function handle(Supervisor $supervisor, array $channels): void
     {
         $uuids = $supervisor->processes()->map(fn(Process $process) => $process->getUuid());
-
-        $this->channelManager->acknowledged($channels);
 
         foreach ($channels as $channel) {
             $uuid = $uuids->shuffle()->shift();
