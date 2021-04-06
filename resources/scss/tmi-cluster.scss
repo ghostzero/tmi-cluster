@@ -8,6 +8,49 @@ html,
 body {
   height: 100%;
 }
+html,
+body {
+  height: 100%;
+}
+
+.app-center {
+  display: flex;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #0a0117;
+  height: 100%;
+}
+
+.form-signin {
+  width: 100%;
+  max-width: 400px;
+  padding: 16px;
+  margin: auto;
+}
+.form-signin .checkbox {
+  font-weight: 400;
+}
+.form-signin .form-control {
+  position: relative;
+  box-sizing: border-box;
+  height: auto;
+  padding: 10px;
+  font-size: 16px;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
 
 @font-face {
   font-family: 'JetBrains Mono';
@@ -51,4 +94,124 @@ body {
 
 .bg-gradient-tmi {
   background: linear-gradient(90deg, rgba(83,5,165,1) 0%, rgba(69,5,141,1) 60%, rgba(36,4,87,1) 100%);
+}
+
+// Utilities
+
+.opacity-0{
+  opacity: 0;
+}
+
+@for $i from 1 through 9 {
+  $opacity: ($i / 10);
+  .opacity-#{($i*10)}{
+    opacity: $opacity;
+  }
+}
+
+// Bubbles
+
+.bg-bubbles {
+  position: absolute;
+  padding: 0 0 0 0;
+  opacity: .5;
+  // Fill the bubble background with the whole screen.
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  // If the element content exceeds the given width and height, the overflow attribute can determine whether the scrollbar behavior is displayed or not.
+  overflow: hidden;
+  li {
+    border-radius: 4px;
+    position: absolute;
+    // Bottom is set to create the effect of bubbles emerging from the bottom of the page.
+    bottom: -160px;
+    // Default bubble size;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.15);
+    list-style: none;
+    // Use custom animation to make bubbles appear, rise and roll.
+    animation: square 15s infinite;
+    transition-timing-function: linear;
+    // Different positions, sizes, transparency and velocities of each bubble are set to make it appear hierarchical.
+    &:nth-child(1) {
+      left: 10%;
+    }
+    &:nth-child(2) {
+      left: 20%;
+      width: 90px;
+      height: 90px;
+      animation-delay: 2s;
+      animation-duration: 7s;
+    }
+    &:nth-child(3) {
+      left: 25%;
+      animation-delay: 4s;
+    }
+    &:nth-child(4) {
+      left: 40%;
+      width: 60px;
+      height: 60px;
+      animation-duration: 8s;
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    &:nth-child(5) {
+      left: 70%;
+    }
+    &:nth-child(6) {
+      left: 80%;
+      width: 120px;
+      height: 120px;
+      animation-delay: 3s;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    &:nth-child(7) {
+      left: 32%;
+      width: 160px;
+      height: 160px;
+      animation-delay: 2s;
+    }
+    &:nth-child(8) {
+      left: 55%;
+      width: 20px;
+      height: 20px;
+      animation-delay: 4s;
+      animation-duration: 15s;
+    }
+    &:nth-child(9) {
+      left: 25%;
+      width: 20px;
+      height: 20px;
+      animation-delay: 2s;
+      animation-duration: 12s;
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    &:nth-child(10) {
+      left: 85%;
+      width: 160px;
+      height: 160px;
+      animation-delay: 5s;
+    }
+  }
+  // Custom square animation;
+  @keyframes square {
+    0% {
+      opacity: 0.5;
+      transform: translateY(0px) rotate(45deg);
+    }
+    25% {
+      opacity: 0.75;
+      transform: translateY(-400px) rotate(90deg)
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-600px) rotate(135deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-1000px) rotate(180deg);
+    }
+  }
 }

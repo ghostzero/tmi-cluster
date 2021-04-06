@@ -201,4 +201,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Channel Manager
+    |--------------------------------------------------------------------------
+    |
+    | ...
+    |
+    */
+
+    'channel_manager' => [
+        'use' => \GhostZero\TmiCluster\Repositories\DummyChannelManager::class,
+        'auto_part' => 7,
+    ],
+
 ];

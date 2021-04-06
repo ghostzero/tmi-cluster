@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster;
 
 use Exception;
-use GhostZero\TmiCluster\Http\Controllers;
 use GhostZero\TmiCluster\Traits\TmiClusterHelpers;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
@@ -66,18 +65,22 @@ class TmiCluster
         static::$smsNumber = $number;
     }
 
-    public static function routes(): void
+    public static function routes($callback = null, array $options = []): void
     {
-        Route::group([
+        $callback = $callback ?: function ($router) {
+            $router->all();
+        };
+
+        $defaultOptions = [
             'domain' => config('tmi-cluster.domain', null),
             'prefix' => config('tmi-cluster.path', 'tmi-cluster'),
             'middleware' => config('tmi-cluster.middleware', 'web'),
-        ], function () {
-            Route::get('', [Controllers\DashboardController::class, 'index']);
-            Route::post('statistics', [Controllers\DashboardController::class, 'statistics']);
-            Route::get('statistics', [Controllers\DashboardController::class, 'statistics']);
-            Route::get('health', [Controllers\DashboardController::class, 'health']);
-            Route::get('metrics', [Controllers\MetricsController::class, 'handle']);
+        ];
+
+        $options = array_merge($defaultOptions, $options);
+
+        Route::group($options, function ($router) use($callback) {
+            $callback(new RouteRegistrar($router));
         });
     }
 }

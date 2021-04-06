@@ -24,5 +24,6 @@ trait ServiceBindings
         Contracts\CommandQueue::class => Repositories\RedisCommandQueue::class,
         Contracts\ChannelDistributor::class => Repositories\RedisChannelManager::class,
         Contracts\SupervisorJoinHandler::class => Repositories\RedisChannelManager::class,
+        Contracts\ChannelManager::class => Repositories\DatabaseChannelManager::class,
     ];
 }

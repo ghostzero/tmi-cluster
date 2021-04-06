@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Repositories;
 
 use GhostZero\Tmi\Channel;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\SupervisorJoinHandler;
@@ -48,6 +49,8 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         $commands = $this->commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
         [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
+
+        $channels = $this->getChannelManager()->authorized($channels);
 
         return $this->joinOrQueue($channels, $staleIds);
     }
@@ -225,5 +228,10 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         }
 
         return $channels;
+    }
+
+    private function getChannelManager(): ChannelManager
+    {
+        return app(ChannelManager::class);
     }
 }
