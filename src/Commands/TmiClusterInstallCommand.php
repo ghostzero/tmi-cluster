@@ -23,9 +23,9 @@ class TmiClusterInstallCommand extends Command
     /**
      * Execute the console command.
      *
-     * @return void
+     * @return int
      */
-    public function handle()
+    public function handle(): int
     {
         $this->comment('Publishing TMI Cluster assets...');
         $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-assets', '--force' => true]);
@@ -34,5 +34,7 @@ class TmiClusterInstallCommand extends Command
         $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-config']);
 
         $this->info('TMI Cluster scaffolding installed successfully.');
+
+        return 0;
     }
 }

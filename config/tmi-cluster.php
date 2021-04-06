@@ -116,6 +116,10 @@ return [
         'periodic_timer' => 2,
     ],
 
+    'channel' => [
+        'stale' => 604800,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | TMI Cluster Auto Scaling Thresholds
@@ -138,25 +142,6 @@ return [
             'scale_in' => 50,
             'scale_out' => 70,
         ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | TMI Cluster Auto Cleanup
-    |--------------------------------------------------------------------------
-    |
-    | The Auto Cleanup automatically parts channels that are offline. If you
-    | using this feature, please also configure the Twitch Helix Credentials
-    | below. Otherwise, we cannot fetch channels.
-    |
-    | See: https://github.com/romanzipp/Laravel-Twitch
-    |
-    */
-
-    'auto_cleanup' => [
-        'enabled' => false,
-        'interval' => 300,
-        'max_delay' => 600,
     ],
 
     /*
@@ -211,8 +196,13 @@ return [
     */
 
     'channel_manager' => [
-        'use' => \GhostZero\TmiCluster\Repositories\DummyChannelManager::class,
-        'auto_part' => 7,
+        'use' => \GhostZero\TmiCluster\Repositories\DatabaseChannelManager::class,
+
+        'auto_cleanup' => [
+            'enabled' => true,
+            'interval' => 300,
+            'max_delay' => 600,
+        ],
     ],
 
 ];

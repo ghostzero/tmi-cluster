@@ -33,7 +33,7 @@ abstract class ClusterClient
 
     abstract public function terminate($status = 0): void;
 
-    abstract public function getClient(): Client;
+    abstract public function getTmiClient(): Client;
 
     abstract public function log(string $message): void;
 

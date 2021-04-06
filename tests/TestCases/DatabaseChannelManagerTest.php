@@ -5,6 +5,7 @@ namespace GhostZero\TmiCluster\Tests\TestCases;
 use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Repositories\DatabaseChannelManager;
 use GhostZero\TmiCluster\Tests\TestCase;
+use GhostZero\TmiCluster\Tests\TestUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class DatabaseChannelManagerTest extends TestCase
@@ -13,7 +14,9 @@ class DatabaseChannelManagerTest extends TestCase
 
     public function testChannelIsAuthorized(): void
     {
-        $this->getChannelManager()->authorize('ghostzero', [
+        $user = new TestUser('ghostzero');
+
+        $this->getChannelManager()->authorize($user, [
             'reconnect' => true,
         ]);
 
@@ -22,25 +25,27 @@ class DatabaseChannelManagerTest extends TestCase
             'tmi_inspector',
         ]);
 
-        self::assertContains('ghostzero', $authorized);
-        self::assertNotContains('tmi_inspector', $authorized);
+        self::assertContains('#ghostzero', $authorized);
+        self::assertNotContains('#tmi_inspector', $authorized);
     }
 
     public function testChannelIsNotAuthorizedAfterRevoke(): void
     {
-        $this->getChannelManager()->authorize('ghostzero', [
+        $user = new TestUser('ghostzero');
+
+        $this->getChannelManager()->authorize($user, [
             'reconnect' => true,
         ]);
 
         $authorized = $this->getChannelManager()->authorized(['ghostzero']);
 
-        self::assertContains('ghostzero', $authorized);
+        self::assertContains('#ghostzero', $authorized);
 
-        $this->getChannelManager()->revokeAuthorization('ghostzero');
+        $this->getChannelManager()->revokeAuthorization($user);
 
         $authorized = $this->getChannelManager()->authorized(['ghostzero']);
 
-        self::assertNotContains('ghostzero', $authorized);
+        self::assertNotContains('#ghostzero', $authorized);
     }
 
     private function getChannelManager(): ChannelManager

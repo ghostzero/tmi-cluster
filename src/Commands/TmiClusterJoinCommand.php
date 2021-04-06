@@ -12,7 +12,7 @@ class TmiClusterJoinCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tmi-cluster:join {channel}';
+    protected $signature = 'tmi-cluster:join {channel*}';
 
     /**
      * The console command description.
@@ -28,12 +28,21 @@ class TmiClusterJoinCommand extends Command
      */
     public function handle(): int
     {
-        $channels = [$this->argument('channel')];
-        $result = $this->getChannelDistributor()->joinNow($channels);
+        $channels = $this->argument('channel');
+        $results = $this->getChannelDistributor()->joinNow($channels);
 
-        print_r($result);
+        foreach ($results as $type => $channels) {
+            if (empty($channels)) {
+                continue;
+            }
 
-        return 1;
+            $this->info(sprintf('%s:', ucfirst($type)));
+            foreach ($channels as $channel) {
+                $this->info(sprintf("\t%s", $channel));
+            }
+        }
+
+        return 0;
     }
 
     private function getChannelDistributor(): ChannelDistributor

@@ -3,11 +3,14 @@
 namespace GhostZero\TmiCluster\Tests\TestCases;
 
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
-use GhostZero\TmiCluster\Repositories\RedisChannelManager;
+use GhostZero\TmiCluster\Repositories\DatabaseChannelManager;
+use GhostZero\TmiCluster\Repositories\RedisChannelDistributor;
 use GhostZero\TmiCluster\Tests\TestCase;
+use GhostZero\TmiCluster\Tests\TestUser;
 use GhostZero\TmiCluster\Tests\Traits\CreatesSupervisors;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -17,26 +20,44 @@ class ChannelDistributorTest extends TestCase
 
     public function testAsyncChannelJoin(): void
     {
-        $this->getChannelDistributor()->join(['test1', 'test2']);
+        $this->getChannelManager(DatabaseChannelManager::class)
+            ->authorize(new TestUser('test1'))
+            ->authorize(new TestUser('test2'))
+            ->authorize(new TestUser('test3'))
+            ->authorize(new TestUser('test4'));
+
+        $this->getChannelDistributor()->join(['test1', 'test2', 'test_unauthorized']);
         $this->getChannelDistributor()->join(['test3']);
 
         $uuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
         $result = $this->getChannelDistributor()->joinNow(['test4'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => [
-            '#test1' => $uuid,
-            '#test2' => $uuid,
-            '#test3' => $uuid,
-            '#test4' => $uuid,
-        ], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => [],
+            'resolved' => [
+                '#test1' => $uuid,
+                '#test2' => $uuid,
+                '#test3' => $uuid,
+                '#test4' => $uuid,
+            ],
+            'ignored' => [],
+            'unauthorized' => [
+                '#test_unauthorized'
+            ],
+        ], $result);
     }
 
     public function testChannelGotRejectedDueMissingServers(): void
     {
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => ['#ghostzero'], 'resolved' => [], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => ['#ghostzero'],
+            'resolved' => [],
+            'ignored' => [],
+            'unauthorized' => [],
+        ], $result);
     }
 
     public function testChannelGotRejectedWithUnhealthyServers(): void
@@ -46,7 +67,12 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => ['#ghostzero'], 'resolved' => [], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => ['#ghostzero'],
+            'resolved' => [],
+            'ignored' => [],
+            'unauthorized' => [],
+        ], $result);
     }
 
     public function testChannelGotResolvedDueActiveServer(): void
@@ -55,7 +81,12 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => ['#ghostzero' => $uuid], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => [],
+            'resolved' => ['#ghostzero' => $uuid],
+            'ignored' => [],
+            'unauthorized' => [],
+        ], $result);
     }
 
     public function testChannelGotIgnoredDueAlreadyJoined(): void
@@ -64,7 +95,12 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => ['#ghostzero' => $uuid], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => [],
+            'resolved' => ['#ghostzero' => $uuid],
+            'ignored' => [],
+            'unauthorized' => [],
+        ], $result);
 
         $uuid2 = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
@@ -72,14 +108,19 @@ class ChannelDistributorTest extends TestCase
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero', 'test', 'test2', 'test3', 'test4'], []);
 
-        self::assertEquals(['rejected' => [], 'resolved' => [
-            '#test' => $uuid2, // because the second process has the lowest channels amount
-            '#test2' => $uuid, // because the first process has the lowest channels amount
-            '#test3' => $uuid2, // because the second process has the lowest channels amount
-            '#test4' => $uuid, // because the first process has the lowest channels amount
-        ], 'ignored' => [
-            '#ghostzero' => $uuid, // because they got already joined in the first server
-        ]], $result);
+        self::assertEquals([
+            'rejected' => [],
+            'resolved' => [
+                '#test' => $uuid2, // because the second process has the lowest channels amount
+                '#test2' => $uuid, // because the first process has the lowest channels amount
+                '#test3' => $uuid2, // because the second process has the lowest channels amount
+                '#test4' => $uuid, // because the first process has the lowest channels amount
+            ],
+            'ignored' => [
+                '#ghostzero' => $uuid, // because they got already joined in the first server
+            ],
+            'unauthorized' => [],
+        ], $result);
 
         $this->assertGotQueued($result, 5);
     }
@@ -91,7 +132,12 @@ class ChannelDistributorTest extends TestCase
             'ghostdemouser', // this channel got already connected
         ]);
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
-        self::assertEquals(['rejected' => [], 'resolved' => ['#ghostzero' => $uuid], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => [],
+            'resolved' => ['#ghostzero' => $uuid],
+            'ignored' => [],
+            'unauthorized' => [],
+        ], $result);
 
         // let's kill all servers and re-join all lost channels into some fresh servers
         sleep(1);
@@ -101,15 +147,27 @@ class ChannelDistributorTest extends TestCase
         ], [$uuid]); // this simulates our flush stale
 
         // check if our previous server got restored
-        self::assertEquals(['rejected' => [], 'resolved' => [
-            '#ghostzero' => $newUuid, // got restored from our lost queue
-            '#ghostdemouser' => $newUuid, // got restored from the flush stale
-        ], 'ignored' => []], $result);
+        self::assertEquals([
+            'rejected' => [],
+            'resolved' => [
+                '#ghostzero' => $newUuid, // got restored from our lost queue
+                '#ghostdemouser' => $newUuid, // got restored from the flush stale
+            ],
+            'ignored' => [],
+            'unauthorized' => [],
+        ], $result);
     }
 
     private function getChannelDistributor(): ChannelDistributor
     {
-        return app(RedisChannelManager::class);
+        return app(RedisChannelDistributor::class);
+    }
+
+    private function getChannelManager(string $concrete): ChannelManager
+    {
+        $this->app->singleton(ChannelManager::class, $concrete);
+
+        return app(ChannelManager::class);
     }
 
     private function assertGotQueued(array $result, int $expectedCount): void

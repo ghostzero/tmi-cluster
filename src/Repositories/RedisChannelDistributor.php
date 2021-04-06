@@ -17,15 +17,17 @@ use Illuminate\Contracts\Redis\LimiterTimeoutException;
 use Illuminate\Support\Collection;
 use stdClass;
 
-class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
+class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistributor
 {
     private CommandQueue $commandQueue;
     private Lock $lock;
+    private ChannelManager $channelManager;
 
     public function __construct()
     {
         $this->commandQueue = app(CommandQueue::class);
         $this->lock = app(Lock::class);
+        $this->channelManager = app(ChannelManager::class);
     }
 
     /**
@@ -50,8 +52,6 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
 
         [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
 
-        $channels = $this->getChannelManager()->authorized($channels);
-
         return $this->joinOrQueue($channels, $staleIds);
     }
 
@@ -70,6 +70,8 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
     public function handle(Supervisor $supervisor, array $channels): void
     {
         $uuids = $supervisor->processes()->map(fn(Process $process) => $process->getUuid());
+
+        $this->channelManager->acknowledged($channels);
 
         foreach ($channels as $channel) {
             $uuid = $uuids->shuffle()->shift();
@@ -90,7 +92,10 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
      */
     private function joinOrQueue(array $channels, array $staleIds): array
     {
-        $result = ['rejected' => [], 'resolved' => [], 'ignored' => []];
+        $authorized = $this->channelManager->authorized($channels);
+        $unauthorized = array_values(array_diff($channels, $authorized));
+
+        $result = ['rejected' => [], 'resolved' => [], 'ignored' => [], 'unauthorized' => $unauthorized];
 
         $processes = Models\SupervisorProcess::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(3))
@@ -106,7 +111,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             })->sortBy('channel_sum');
 
         if ($processes->isEmpty()) {
-            $result = $this->reject($result, $channels, $staleIds);
+            $result = $this->reject($result, $authorized, $staleIds);
 
             return $this->result($result);
         }
@@ -116,7 +121,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             config('tmi-cluster.throttle.join.allow', 2000)
         );
 
-        foreach (array_chunk($channels, $take) as $chunk) {
+        foreach (array_chunk($authorized, $take) as $chunk) {
             /** @var Lock $lock */
             $lock = app(Lock::class);
 
@@ -228,10 +233,5 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         }
 
         return $channels;
-    }
-
-    private function getChannelManager(): ChannelManager
-    {
-        return app(ChannelManager::class);
     }
 }

@@ -17,6 +17,7 @@ class CreateTmiClusterChannelsTable extends Migration
             $table->string('id', 25)->primary();
             $table->boolean('revoked')->default(false);
             $table->boolean('reconnect')->default(false);
+            $table->timestamp('acknowledged_at')->nullable();
             $table->uuid('supervisor_process_id')->nullable();
             $table->timestamps();
         });
