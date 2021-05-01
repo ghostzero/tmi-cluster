@@ -1,0 +1,42 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.4, 8.0]
+        composer-dependency: [prefer-stable, prefer-lowest]
+
+    name: "PHP ${{ matrix.php }} - ${{ matrix.composer-dependency }}"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, redis, zip
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist --${{ matrix.composer-dependency }}
+
+      - name: PHPUnit Tests
+        run: vendor/bin/phpunit
+        env:
+          CLIENT_ID: ${{ secrets.TMI_IDENTITY_USERNAME }}
+          CLIENT_SECRET: ${{ secrets.TMI_IDENTITY_PASSWORD }}

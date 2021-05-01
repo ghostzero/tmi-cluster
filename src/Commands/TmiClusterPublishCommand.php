@@ -23,13 +23,15 @@ class TmiClusterPublishCommand extends Command
     /**
      * Execute the console command.
      *
-     * @return void
+     * @return int
      */
-    public function handle()
+    public function handle(): int
     {
         $this->comment('Publishing TMI Cluster assets...');
         $this->callSilent('vendor:publish', ['--tag' => 'tmi-cluster-assets', '--force' => true]);
 
         $this->info('TMI Cluster assets published successfully.');
+
+        return 0;
     }
 }

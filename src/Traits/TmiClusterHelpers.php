@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Traits;
 
 use GhostZero\Tmi\Channel;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 
 trait TmiClusterHelpers
@@ -14,6 +15,16 @@ trait TmiClusterHelpers
         $commandQueue = app(CommandQueue::class);
 
         $channel = Channel::sanitize($channel);
+
+        if (config('tmi-cluster.channel_manager.channel.restrict_messages')) {
+            /** @var ChannelManager $channelManager */
+            $channelManager = app(ChannelManager::class);
+
+            if (!$channelManager->authorized([$channel])) {
+                return;
+            }
+        }
+
         $commandQueue->push(CommandQueue::NAME_ANY_SUPERVISOR, CommandQueue::COMMAND_TMI_WRITE, [
             'raw_command' => "PRIVMSG {$channel} :{$message}",
         ]);

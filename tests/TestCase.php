@@ -3,9 +3,9 @@
 namespace GhostZero\TmiCluster\Tests;
 
 
+use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Facades\TmiCluster;
 use GhostZero\TmiCluster\Providers\TmiClusterServiceProvider;
-use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Contracts\Redis\Factory;
 use Illuminate\Foundation\Application;
 use Predis\ClientInterface;
@@ -60,5 +60,12 @@ class TestCase extends \Orchestra\Testbench\TestCase
         /** @var ClientInterface $connection */
         $connection = app(Factory::class)->connection('tmi-cluster');
         $connection->flushdb();
+    }
+
+    protected function useChannelManager(string $concrete): ChannelManager
+    {
+        $this->app->singleton(ChannelManager::class, $concrete);
+
+        return app(ChannelManager::class);
     }
 }

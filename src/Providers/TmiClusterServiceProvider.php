@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Providers;
 
 use Exception;
 use GhostZero\TmiCluster\Commands;
+use GhostZero\TmiCluster\Contracts;
 use GhostZero\TmiCluster\EventMap;
 use GhostZero\TmiCluster\ServiceBindings;
 use GhostZero\TmiCluster\TmiCluster;
@@ -68,6 +69,8 @@ class TmiClusterServiceProvider extends ServiceProvider
                 ? $this->app->singleton($value)
                 : $this->app->singleton($key, $value);
         }
+
+        $this->app->singleton(Contracts\ChannelManager::class, config('tmi-cluster.channel_manager.use'));
     }
 
     /**
@@ -79,6 +82,7 @@ class TmiClusterServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
+                Commands\TmiClusterAuthorizeCommand::class,
                 Commands\TmiClusterCommand::class,
                 Commands\TmiClusterListCommand::class,
                 Commands\TmiClusterJoinCommand::class,
@@ -86,6 +90,7 @@ class TmiClusterServiceProvider extends ServiceProvider
                 Commands\TmiClusterPurgeCommand::class,
                 Commands\TmiClusterInstallCommand::class,
                 Commands\TmiClusterPublishCommand::class,
+                Commands\TmiClusterTerminateCommand::class,
             ]);
         }
     }

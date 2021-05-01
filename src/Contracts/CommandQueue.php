@@ -26,7 +26,7 @@ interface CommandQueue
     public const COMMAND_TMI_PART = 'tmi:part';
 
     /**
-     * Executes a exit(0) within the tmi cluster process.
+     * Executes a exit(6) within the tmi cluster process.
      */
     public const COMMAND_CLIENT_EXIT = 'client:exit';
 
@@ -39,6 +39,11 @@ interface CommandQueue
      * Scales in the supervisor by one process.
      */
     public const COMMAND_SUPERVISOR_SCALE_IN = 'supervisor:scale-in';
+
+    /**
+     * Executes a exit(0) within the tmi cluster supervisor.
+     */
+    public const COMMAND_SUPERVISOR_TERMINATE = 'supervisor:terminate';
 
     /**
      * Queue to handle lost and found cases. Eg. a channel cannot be joined.

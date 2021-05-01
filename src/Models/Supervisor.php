@@ -22,6 +22,7 @@ class Supervisor extends Model
 
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $table = 'tmi_cluster_supervisors';
 
     protected $guarded = [];
 

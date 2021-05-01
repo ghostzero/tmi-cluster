@@ -26,6 +26,7 @@ class SupervisorProcess extends Model
 
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $table = 'tmi_cluster_supervisor_processes';
 
     protected $guarded = [];
 

@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Repositories;
 
 use GhostZero\Tmi\Channel;
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
+use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Contracts\SupervisorJoinHandler;
@@ -16,25 +17,28 @@ use Illuminate\Contracts\Redis\LimiterTimeoutException;
 use Illuminate\Support\Collection;
 use stdClass;
 
-class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
+class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistributor
 {
     private CommandQueue $commandQueue;
     private Lock $lock;
+    private ChannelManager $channelManager;
 
     public function __construct()
     {
         $this->commandQueue = app(CommandQueue::class);
         $this->lock = app(Lock::class);
+        $this->channelManager = app(ChannelManager::class);
     }
 
     /**
      * @inheritdoc
      */
-    public function join(array $channels, array $staleIds = []): void
+    public function join(array $channels, array $staleIds = [], bool $acknowledge = true): void
     {
         $this->commandQueue->push(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
             'channels' => array_map(static fn($channel) => Channel::sanitize($channel), $channels),
             'staleIds' => $staleIds,
+            'acknowledge' => $acknowledge,
         ]);
     }
 
@@ -42,12 +46,14 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
      * @inheritdoc
      * @throws LimiterTimeoutException
      */
-    public function joinNow(array $channels, array $staleIds = []): array
+    public function joinNow(array $channels, array $staleIds = [], bool $acknowledge = true): array
     {
         $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $commands = $this->commandQueue->pending(CommandQueue::NAME_JOIN_HANDLER);
 
-        [$staleIds, $channels] = Arr::unique($commands, $staleIds, $channels);
+        [$staleIds, $channels, $acknowledged] = Arr::unique($commands, $staleIds, $channels, $acknowledge);
+
+        $this->channelManager->acknowledged($acknowledged);
 
         return $this->joinOrQueue($channels, $staleIds);
     }
@@ -61,7 +67,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
         $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $channels = $this->restoreQueuedChannelsFromStaleQueues($staleIds, $channels);
 
-        return $this->joinNow($channels);
+        return $this->joinNow($channels, $staleIds, false);
     }
 
     public function handle(Supervisor $supervisor, array $channels): void
@@ -87,7 +93,10 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
      */
     private function joinOrQueue(array $channels, array $staleIds): array
     {
-        $result = ['rejected' => [], 'resolved' => [], 'ignored' => []];
+        $authorized = $this->channelManager->authorized($channels);
+        $unauthorized = array_values(array_diff($channels, $authorized));
+
+        $result = ['rejected' => [], 'resolved' => [], 'ignored' => [], 'unauthorized' => $unauthorized];
 
         $processes = Models\SupervisorProcess::query()
             ->whereTime('last_ping_at', '>', now()->subSeconds(3))
@@ -103,7 +112,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             })->sortBy('channel_sum');
 
         if ($processes->isEmpty()) {
-            $result = $this->reject($result, $channels, $staleIds);
+            $result = $this->reject($result, $authorized, $staleIds);
 
             return $this->result($result);
         }
@@ -113,7 +122,7 @@ class RedisChannelManager implements SupervisorJoinHandler, ChannelDistributor
             config('tmi-cluster.throttle.join.allow', 2000)
         );
 
-        foreach (array_chunk($channels, $take) as $chunk) {
+        foreach (array_chunk($authorized, $take) as $chunk) {
             /** @var Lock $lock */
             $lock = app(Lock::class);
 

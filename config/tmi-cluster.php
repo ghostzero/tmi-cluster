@@ -1,5 +1,7 @@
 <?php
 
+use GhostZero\TmiCluster\Repositories;
+
 return [
 
     /*
@@ -142,25 +144,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | TMI Cluster Auto Cleanup
-    |--------------------------------------------------------------------------
-    |
-    | The Auto Cleanup automatically parts channels that are offline. If you
-    | using this feature, please also configure the Twitch Helix Credentials
-    | below. Otherwise, we cannot fetch channels.
-    |
-    | See: https://github.com/romanzipp/Laravel-Twitch
-    |
-    */
-
-    'auto_cleanup' => [
-        'enabled' => false,
-        'interval' => 300,
-        'max_delay' => 600,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Twitch Helix Credentials
     |--------------------------------------------------------------------------
     |
@@ -198,6 +181,30 @@ return [
             'allow' => 2000,
             'every' => 10,
             'take' => 100,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Channel Manager
+    |--------------------------------------------------------------------------
+    |
+    | ...
+    |
+    */
+
+    'channel_manager' => [
+        'use' => Repositories\DatabaseChannelManager::class,
+
+        'auto_cleanup' => [
+            'enabled' => true,
+            'interval' => 300,
+            'max_delay' => 600,
+        ],
+
+        'channel' => [
+            'restrict_messages' => false,
+            'stale' => 168,
         ],
     ],
 

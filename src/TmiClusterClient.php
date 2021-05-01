@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster;
 
 use Closure;
-use Exception;
 use GhostZero\Tmi\Client;
 use GhostZero\Tmi\ClientOptions;
 use GhostZero\Tmi\Events\Event;
@@ -24,6 +23,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
 /**
+ * This is our client class that handles all irc data from twitch.
  *
  * Exit Codes:
  *  3 - ModelNotFoundException: Server started with unknown uuid.
@@ -117,18 +117,10 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
                 $this->terminate(5);
             }
 
-            event(new PeriodicTimerCalled());
+            event(new PeriodicTimerCalled($this));
         });
 
-        $cleanupInterval = $this->getCleanupInterval();
-        $this->log('Register cleanup loop for every ' . $cleanupInterval . ' sec.');
-        $this->client->getLoop()->addPeriodicTimer($cleanupInterval, function () {
-            try {
-                $this->autoCleanup->cleanup($this);
-            } catch (Exception $e) {
-                $this->log($e->getTraceAsString());
-            }
-        });
+        $this->autoCleanup->register($this);
     }
 
     private function registerEvents(): void
@@ -225,7 +217,6 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
                     $this->client->write($command->options->raw_command);
                     break;
                 case CommandQueue::COMMAND_TMI_JOIN:
-                    $this->autoCleanup->acquireLock($this, $command->options->channel);
                     $this->client->join($command->options->channel);
                     break;
                 case CommandQueue::COMMAND_TMI_PART:
@@ -240,7 +231,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         }
     }
 
-    public function getClient(): Client
+    public function getTmiClient(): Client
     {
         return $this->client;
     }
@@ -253,11 +244,5 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
     public function getUuid()
     {
         return $this->model->getKey();
-    }
-
-    private function getCleanupInterval(): int
-    {
-        return config('tmi-cluster.auto_cleanup.interval', 300)
-            + random_int(0, max(0, config('tmi-cluster.auto_cleanup.max_delay', 600)));
     }
 }
