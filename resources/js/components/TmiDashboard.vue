@@ -188,6 +188,7 @@
 
 <script>
 import Charts from "./Charts";
+
 export default {
   name: "TmiDashboard",
   components: {Charts},

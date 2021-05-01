@@ -8,7 +8,6 @@ use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Tests\TestCase;
 use GhostZero\TmiCluster\Tests\Traits\CreatesSupervisors;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use phpDocumentor\Reflection\Types\Self_;
 
 class StaleTest extends TestCase
 {

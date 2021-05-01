@@ -3,7 +3,6 @@
 namespace GhostZero\TmiCluster\Tests\TestCases;
 
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
-use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\SupervisorProcess;

@@ -6,7 +6,6 @@ namespace GhostZero\TmiCluster\Tests;
 use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Facades\TmiCluster;
 use GhostZero\TmiCluster\Providers\TmiClusterServiceProvider;
-use Illuminate\Contracts\Redis\Connection;
 use Illuminate\Contracts\Redis\Factory;
 use Illuminate\Foundation\Application;
 use Predis\ClientInterface;
