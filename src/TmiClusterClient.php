@@ -19,6 +19,7 @@ use GhostZero\TmiCluster\Events\ClusterClientRegistered;
 use GhostZero\TmiCluster\Events\ClusterClientTerminated;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
+use GhostZero\TmiCluster\Repositories\RedisChannelDistributor;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
@@ -185,7 +186,13 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         $this->working = false;
 
         // evacuate all current channels to a new process
-        app(ChannelDistributor::class)->join(array_keys($this->client->getChannels()), [$this->model->getKey()]);
+        /** @var ChannelDistributor $channelDistributor */
+        $channelDistributor = app(ChannelDistributor::class);
+        if ($channelDistributor instanceof RedisChannelDistributor) {
+            $channelDistributor->forgetLocks($this->client->getChannels());
+            $this->log(sprintf('%s Channels unlocked.', count($this->client->getChannels())));
+        }
+        $channelDistributor->join(array_keys($this->client->getChannels()), [$this->model->getKey()]);
         $this->log(sprintf('TMI Client evacuated! Migrated: %s', count($this->client->getChannels())));
 
         event(new ClusterClientTerminated($this));

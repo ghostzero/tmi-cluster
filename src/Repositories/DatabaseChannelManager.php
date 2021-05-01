@@ -7,7 +7,7 @@ use GhostZero\TmiCluster\AutoCleanup;
 use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Contracts\Invitable;
 use GhostZero\TmiCluster\Models\Channel;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class DatabaseChannelManager implements ChannelManager

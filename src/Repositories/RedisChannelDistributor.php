@@ -194,7 +194,7 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
 
     private function getKey(string $channel): string
     {
-        return sprintf('channel-manager:join-%s', $channel);
+        return sprintf('channel-distributor:join-%s', $channel);
     }
 
     private function getProcess(Collection $processes, string $channel)
@@ -234,5 +234,12 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
         }
 
         return $channels;
+    }
+
+    public function forgetLocks(array $channels): void
+    {
+        foreach ($channels as $channel) {
+            $this->lock->release($this->getKey($channel));
+        }
     }
 }
