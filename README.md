@@ -23,7 +23,7 @@ The cluster stores its data in the database and has a Redis Command Queue to sen
 - Up-to-date Twitch IRC Client written in PHP 7.4
 - Scalable message input/output queue
 - Advanced cluster status dashboard
-- Optional channel management and invite screen
+- Channel management and invite screen
 
 ## PHP Twitch Messaging Interface
 

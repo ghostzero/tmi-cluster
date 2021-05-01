@@ -29,3 +29,13 @@ The ChannelManager now manages the channels and decides whether to remove channe
 PR: https://github.com/ghostzero/tmi-cluster/pull/14
 
 Channels must have given an authorization before the TMI cluster joins the channels. This prevents the TMI cluster from joining channels that have revoked authorization, for example.
+
+### TMI Cluster Database
+
+PR: https://github.com/ghostzero/tmi-cluster/pull/14
+
+We added a prefix for all our tables with `tmi_cluster_` e.g. `tmi_cluster_channels`. Don't forget to update your database. We recommend that you turn off the TMI Custer for this migration.
+
+```bash
+php artisan migrate
+```
