@@ -5,6 +5,13 @@ on: [push, pull_request]
 jobs:
   tests:
 
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+
     strategy:
       fail-fast: false
       matrix:

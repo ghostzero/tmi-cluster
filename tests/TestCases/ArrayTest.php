@@ -15,16 +15,16 @@ class ArrayTest extends TestCase
     public function testJoinServer(): void
     {
         $result = Arr::unique([
-            $this->fake(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
+            $this->fake([
                 'channels' => ['channel-b'],
                 'staleIds' => ['stale-b'],
                 'acknowledge' => true,
             ]),
-            $this->fake(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
+            $this->fake([
                 'channels' => ['channel-b'],
                 'acknowledge' => true,
             ]),
-            $this->fake(CommandQueue::NAME_JOIN_HANDLER, CommandQueue::COMMAND_TMI_JOIN, [
+            $this->fake([
                 'channels' => ['channel-c'],
                 'staleIds' => ['stale-c'],
                 'acknowledge' => false,
@@ -39,17 +39,15 @@ class ArrayTest extends TestCase
     }
 
     /**
-     * @param string $name
-     * @param string $command
      * @param array $options
      * @return mixed
      * @throws JsonException
      */
-    private function fake(string $name, string $command, array $options = [])
+    private function fake(array $options = [])
     {
         // encode json string
         $encoded = json_encode([
-            'command' => $command,
+            'command' => CommandQueue::COMMAND_TMI_JOIN,
             'options' => $options,
             'time' => microtime(),
         ], JSON_THROW_ON_ERROR);
