@@ -1,5 +1,7 @@
 <?php
 
+use GhostZero\TmiCluster\Repositories;
+
 return [
 
     /*
@@ -192,7 +194,7 @@ return [
     */
 
     'channel_manager' => [
-        'use' => \GhostZero\TmiCluster\Repositories\DatabaseChannelManager::class,
+        'use' => Repositories\DatabaseChannelManager::class,
 
         'auto_cleanup' => [
             'enabled' => true,
@@ -201,6 +203,7 @@ return [
         ],
 
         'channel' => [
+            'restrict_messages' => false,
             'stale' => 168,
         ],
     ],

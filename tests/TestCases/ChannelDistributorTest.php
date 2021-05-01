@@ -174,13 +174,6 @@ class ChannelDistributorTest extends TestCase
         return app(RedisChannelDistributor::class);
     }
 
-    private function useChannelManager(string $concrete): ChannelManager
-    {
-        $this->app->singleton(ChannelManager::class, $concrete);
-
-        return app(ChannelManager::class);
-    }
-
     private function assertGotQueued(array $result, int $expectedCount): void
     {
         $processIds = array_unique(array_merge(
