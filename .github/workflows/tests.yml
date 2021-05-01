@@ -26,9 +26,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup PHP
-        uses: nanasess/setup-php@master
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, redis, zip
+          coverage: none
 
       - name: Install dependencies
         run: composer update --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist --${{ matrix.composer-dependency }}
