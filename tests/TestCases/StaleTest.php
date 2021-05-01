@@ -16,8 +16,13 @@ class StaleTest extends TestCase
 
     public function testCountHealthySupervisors(): void
     {
-        $this->createSupervisor(now()->subMinute(), SupervisorProcess::STATE_CONNECTED);
-        $this->createSupervisor(now()->subMinute(), SupervisorProcess::STATE_DISCONNECTED);
+        $staleSeconds = config('tmi-cluster.supervisor.stale', 300);
+
+        self::assertGreaterThan(0, $staleSeconds);
+
+        $this->createSupervisor(now()->subSeconds($staleSeconds), SupervisorProcess::STATE_CONNECTED);
+        $this->createSupervisor(now()->subSeconds($staleSeconds), SupervisorProcess::STATE_DISCONNECTED);
+        $this->createSupervisor(now()->subSeconds($staleSeconds - 10), SupervisorProcess::STATE_DISCONNECTED);
         $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
         $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
         $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
@@ -29,7 +34,7 @@ class StaleTest extends TestCase
             ->filter(fn(Models\Supervisor $supervisor) => !$supervisor->is_stale);
 
         self::assertEquals(2, $stale->count());
-        self::assertEquals(3, $healthy->count());
+        self::assertEquals(4, $healthy->count());
     }
 
     public function repository(): SupervisorRepository

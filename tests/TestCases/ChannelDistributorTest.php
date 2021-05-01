@@ -8,10 +8,11 @@ use GhostZero\TmiCluster\Contracts\ClusterClient;
 use GhostZero\TmiCluster\Contracts\CommandQueue;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Repositories\DatabaseChannelManager;
+use GhostZero\TmiCluster\Repositories\DummyChannelManager;
 use GhostZero\TmiCluster\Repositories\RedisChannelDistributor;
 use GhostZero\TmiCluster\Tests\TestCase;
-use GhostZero\TmiCluster\Tests\TestUser;
 use GhostZero\TmiCluster\Tests\Traits\CreatesSupervisors;
+use GhostZero\TmiCluster\TwitchLogin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ChannelDistributorTest extends TestCase
@@ -20,11 +21,11 @@ class ChannelDistributorTest extends TestCase
 
     public function testAsyncChannelJoin(): void
     {
-        $this->getChannelManager(DatabaseChannelManager::class)
-            ->authorize(new TestUser('test1'))
-            ->authorize(new TestUser('test2'))
-            ->authorize(new TestUser('test3'))
-            ->authorize(new TestUser('test4'));
+        $this->useChannelManager(DatabaseChannelManager::class)
+            ->authorize(new TwitchLogin('test1'))
+            ->authorize(new TwitchLogin('test2'))
+            ->authorize(new TwitchLogin('test3'))
+            ->authorize(new TwitchLogin('test4'));
 
         $this->getChannelDistributor()->join(['test1', 'test2', 'test_unauthorized']);
         $this->getChannelDistributor()->join(['test3']);
@@ -50,6 +51,8 @@ class ChannelDistributorTest extends TestCase
 
     public function testChannelGotRejectedDueMissingServers(): void
     {
+        $this->useChannelManager(DummyChannelManager::class);
+
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
 
         self::assertEquals([
@@ -62,6 +65,8 @@ class ChannelDistributorTest extends TestCase
 
     public function testChannelGotRejectedWithUnhealthyServers(): void
     {
+        $this->useChannelManager(DummyChannelManager::class);
+
         $this->createSupervisor(now()->subSeconds(5), SupervisorProcess::STATE_CONNECTED);
         $this->createSupervisor(now(), SupervisorProcess::STATE_INITIALIZE);
 
@@ -77,6 +82,8 @@ class ChannelDistributorTest extends TestCase
 
     public function testChannelGotResolvedDueActiveServer(): void
     {
+        $this->useChannelManager(DummyChannelManager::class);
+
         $uuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
@@ -91,6 +98,8 @@ class ChannelDistributorTest extends TestCase
 
     public function testChannelGotIgnoredDueAlreadyJoined(): void
     {
+        $this->useChannelManager(DummyChannelManager::class);
+
         $uuid = $this->createSupervisor(now(), SupervisorProcess::STATE_CONNECTED);
 
         $result = $this->getChannelDistributor()->joinNow(['ghostzero'], []);
@@ -127,6 +136,8 @@ class ChannelDistributorTest extends TestCase
 
     public function testChannelGotResolvedAfterInactiveSupervisor(): void
     {
+        $this->useChannelManager(DummyChannelManager::class);
+
         // join server normally
         $uuid = $this->createSupervisor(now()->subSeconds(2), SupervisorProcess::STATE_CONNECTED, [
             'ghostdemouser', // this channel got already connected
@@ -163,7 +174,7 @@ class ChannelDistributorTest extends TestCase
         return app(RedisChannelDistributor::class);
     }
 
-    private function getChannelManager(string $concrete): ChannelManager
+    private function useChannelManager(string $concrete): ChannelManager
     {
         $this->app->singleton(ChannelManager::class, $concrete);
 

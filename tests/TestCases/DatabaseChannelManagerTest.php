@@ -5,7 +5,7 @@ namespace GhostZero\TmiCluster\Tests\TestCases;
 use GhostZero\TmiCluster\Contracts\ChannelManager;
 use GhostZero\TmiCluster\Repositories\DatabaseChannelManager;
 use GhostZero\TmiCluster\Tests\TestCase;
-use GhostZero\TmiCluster\Tests\TestUser;
+use GhostZero\TmiCluster\TwitchLogin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class DatabaseChannelManagerTest extends TestCase
@@ -14,7 +14,7 @@ class DatabaseChannelManagerTest extends TestCase
 
     public function testChannelIsAuthorized(): void
     {
-        $user = new TestUser('ghostzero');
+        $user = new TwitchLogin('ghostzero');
 
         $this->getChannelManager()->authorize($user, [
             'reconnect' => true,
@@ -31,7 +31,7 @@ class DatabaseChannelManagerTest extends TestCase
 
     public function testChannelIsNotAuthorizedAfterRevoke(): void
     {
-        $user = new TestUser('ghostzero');
+        $user = new TwitchLogin('ghostzero');
 
         $this->getChannelManager()->authorize($user, [
             'reconnect' => true,
