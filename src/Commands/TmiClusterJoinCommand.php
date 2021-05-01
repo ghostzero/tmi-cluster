@@ -4,6 +4,7 @@ namespace GhostZero\TmiCluster\Commands;
 
 use GhostZero\TmiCluster\Contracts\ChannelDistributor;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 
 class TmiClusterJoinCommand extends Command
 {
@@ -12,7 +13,8 @@ class TmiClusterJoinCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tmi-cluster:join {channel*}';
+    protected $signature = 'tmi-cluster:join {channel*}
+                                {--A|authorize : Authorize all given channels}';
 
     /**
      * The console command description.
@@ -29,6 +31,19 @@ class TmiClusterJoinCommand extends Command
     public function handle(): int
     {
         $channels = $this->argument('channel');
+
+        if ($this->option('authorize')) {
+            $result = Artisan::call('tmi-cluster:authorize', [
+                'channel' => $channels,
+            ]);
+
+            if ($result === 0) {
+                $this->info(Artisan::output());
+            } else {
+                $this->error(Artisan::output());
+            }
+        }
+
         $results = $this->getChannelDistributor()->joinNow($channels);
 
         foreach ($results as $type => $channels) {

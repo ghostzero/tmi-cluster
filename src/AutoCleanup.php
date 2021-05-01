@@ -7,13 +7,10 @@ use GhostZero\TmiCluster\Contracts\ChannelManager;
 
 class AutoCleanup
 {
-    private Lock $lock;
-
     private ChannelManager $channelManager;
 
     public function __construct()
     {
-        $this->lock = app(Lock::class);
         $this->channelManager = app(ChannelManager::class);
     }
 
@@ -36,7 +33,7 @@ class AutoCleanup
                 return;
             }
 
-            $channels = $this->channelManager->absence($client->getTmiClient()->getChannels());
+            $channels = $this->channelManager->stale($client->getTmiClient()->getChannels());
 
             foreach ($channels as $channel) {
                 $client->getTmiClient()->part($channel);

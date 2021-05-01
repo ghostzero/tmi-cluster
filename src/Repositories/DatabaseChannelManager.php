@@ -69,6 +69,9 @@ class DatabaseChannelManager implements ChannelManager
         return TmiChannel::sanitize($channel);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function stale(array $channels): array
     {
         return Channel::query()

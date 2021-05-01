@@ -82,6 +82,7 @@ class TmiClusterServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
+                Commands\TmiClusterAuthorizeCommand::class,
                 Commands\TmiClusterCommand::class,
                 Commands\TmiClusterListCommand::class,
                 Commands\TmiClusterJoinCommand::class,
