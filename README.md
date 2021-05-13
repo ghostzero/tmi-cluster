@@ -7,9 +7,13 @@
 <p align="center">
   <a href="https://packagist.org/packages/ghostzero/tmi-cluster"><img src="https://img.shields.io/packagist/dt/ghostzero/tmi-cluster" alt="Total Downloads"></a>
   <a href="https://packagist.org/packages/ghostzero/tmi-cluster"><img src="https://img.shields.io/packagist/v/ghostzero/tmi-cluster" alt="Latest Stable Version"></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fghostzero%2Ftmi-cluster?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fghostzero%2Ftmi-cluster.svg?type=shield"/></a>
   <a href="https://packagist.org/packages/ghostzero/tmi-cluster"><img src="https://img.shields.io/packagist/l/ghostzero/tmi-cluster" alt="License"></a>
   <a href="https://discord.gg/qsxVMNg"><img src="https://discordapp.com/api/guilds/552952675369484301/embed.png?style=shield" alt="Discord"></a>
 </p>
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fghostzero%2Ftmi-cluster.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fghostzero%2Ftmi-cluster?ref=badge_large)
 
 ## Introduction
 
