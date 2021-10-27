@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | TMI Asset Path
+    |--------------------------------------------------------------------------
+    |
+    | This setting allows you to define another base url for all tmi-cluster
+    | assets. This only applies to asset files like ico, js and css files.
+    |
+    */
+
+    'asset_url' => env('TMI_CLUSTER_ASSET_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | TMI Cluster Path
     |--------------------------------------------------------------------------
     |

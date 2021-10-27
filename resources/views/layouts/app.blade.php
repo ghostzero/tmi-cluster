@@ -9,7 +9,7 @@
     @stack('tmi-cluster::meta')
 
     <link rel="canonical" href="{{ request()->url() }}">
-    <link rel="icon" type="image/x-icon" href="{{ asset('vendor/tmi-cluster/favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="{{ GhostZero\TmiCluster\Support\Url::asset('vendor/tmi-cluster/favicon.ico') }}">
 
     <!-- Fonts & Core CSS -->
     <link href="https://fa-cdn.bitinflow.com/releases/v5.13.0/css/all.min.css" rel="stylesheet"
@@ -20,7 +20,7 @@
           crossorigin="anonymous">
     <link rel="preload" as="font" href="https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2" type="font/woff2"
           crossorigin="anonymous">
-    <link href="{{ asset(mix('tmi-cluster.css', 'vendor/tmi-cluster')) }}" rel="stylesheet">
+    <link href="{{ GhostZero\TmiCluster\Support\Url::asset(mix('tmi-cluster.css', 'vendor/tmi-cluster')) }}" rel="stylesheet">
 
     <!-- Theme -->
     <meta name="theme-color" content="#6d00ff">
@@ -37,6 +37,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
-<script src="{{ asset(mix('tmi-cluster.js', 'vendor/tmi-cluster')) }}"></script>
+<script src="{{ GhostZero\TmiCluster\Support\Url::asset(mix('tmi-cluster.js', 'vendor/tmi-cluster')) }}"></script>
 </body>
 </html>
