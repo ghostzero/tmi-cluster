@@ -18,6 +18,6 @@ class Url
 
     private static function getAssetUrl(): ?string
     {
-        return !config('tmi-cluster.asset_url');
+        return config('tmi-cluster.asset_url');
     }
 }
