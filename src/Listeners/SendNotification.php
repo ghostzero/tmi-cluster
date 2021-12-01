@@ -13,6 +13,10 @@ class SendNotification
     {
         $notification = $event->toNotification();
 
+        if ($notification === null) {
+            return;
+        }
+
         /** @var Lock $lock */
         $lock = app(Lock::class);
 

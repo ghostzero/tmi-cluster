@@ -6,6 +6,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Framework
+    |--------------------------------------------------------------------------
+    |
+    | Here you can specify which framework you use. This will be used to
+    | determine which features are available. Some features are only available
+    | within the laravel framework. Some features are not available within
+    | the laravel-zero framework, like the "notifications" feature.
+    |
+    | Supported: "laravel", "laravel-zero"
+    |
+    */
+
+    'framework' => 'laravel',
+
+    /*
+    |--------------------------------------------------------------------------
     | TMI Cluster Domain
     |--------------------------------------------------------------------------
     |

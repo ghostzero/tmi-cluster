@@ -3,7 +3,6 @@
 
 namespace GhostZero\TmiCluster\Tests\TestCases;
 
-
 use GhostZero\TmiCluster\Events\ProcessScaled;
 use GhostZero\TmiCluster\Listeners\SendNotification;
 use GhostZero\TmiCluster\Tests\TestCase;

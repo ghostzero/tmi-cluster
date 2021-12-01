@@ -29,7 +29,7 @@ class AutoCleanup
     private function handle(TmiClusterClient $client)
     {
         try {
-            if (!$this->shouldCleanup()) {
+            if (!self::shouldCleanup()) {
                 return;
             }
 

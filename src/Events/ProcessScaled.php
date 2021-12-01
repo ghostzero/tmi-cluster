@@ -21,8 +21,12 @@ class ProcessScaled
         $this->cause = $cause;
     }
 
-    public function toNotification(): AutoScaleScaledNotification
+    public function toNotification(): ?AutoScaleScaledNotification
     {
+        if (config('tmi-cluster.framework') === 'laravel-zero') {
+            return null; // notifications are not supported
+        }
+
         return new AutoScaleScaledNotification(
             $this->message, $this->description, $this->event, $this->cause
         );
