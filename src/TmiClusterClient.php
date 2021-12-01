@@ -143,6 +143,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
             event($event);
         } catch (Throwable $exception) {
             $this->log($exception->getMessage());
+            $this->log($exception->getTraceAsString());
             return;
         }
 
