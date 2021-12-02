@@ -84,6 +84,7 @@ class TmiClusterServiceProvider extends ServiceProvider
             $this->commands([
                 Commands\TmiClusterAuthorizeCommand::class,
                 Commands\TmiClusterCommand::class,
+                Commands\TmiClusterFeaturesCommand::class,
                 Commands\TmiClusterListCommand::class,
                 Commands\TmiClusterJoinCommand::class,
                 Commands\TmiClusterProcessCommand::class,

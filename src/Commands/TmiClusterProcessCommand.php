@@ -25,7 +25,7 @@ class TmiClusterProcessCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Run the tmi client';
 
     /**
      * Execute the console command.
