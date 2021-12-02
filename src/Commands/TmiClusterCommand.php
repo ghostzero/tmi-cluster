@@ -7,6 +7,7 @@ namespace GhostZero\TmiCluster\Commands;
 use DomainException;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use GhostZero\TmiCluster\Supervisor;
+use GhostZero\TmiCluster\Support\Composer;
 use Illuminate\Console\Command;
 
 class TmiClusterCommand extends Command
@@ -30,6 +31,8 @@ class TmiClusterCommand extends Command
      */
     public function handle(): int
     {
+        $this->printMotd();
+
         try {
             /** @var Supervisor $supervisor */
             $supervisor = app(SupervisorRepository::class)->create();
@@ -40,6 +43,9 @@ class TmiClusterCommand extends Command
         }
 
         $this->info("Supervisor {$supervisor->model->getKey()} started successfully!");
+        $this->info('Press Ctrl+C to stop the supervisor safely.');
+
+        $this->getOutput()->newLine();
 
         return $this->start($supervisor);
     }
@@ -51,7 +57,9 @@ class TmiClusterCommand extends Command
         }
 
         $supervisor->handleOutputUsing(function ($type, $line) {
-            $this->info($line);
+            $method = $this->matchOutputType($type);
+            $time = date('Y-m-d H:i:s');
+            $this->{$method}('[' . $time . '] ' . trim($line));
         });
 
         $supervisor->scale(config('tmi-cluster.auto_scale.processes.min'));
@@ -59,5 +67,43 @@ class TmiClusterCommand extends Command
         $supervisor->monitor();
 
         return 0;
+    }
+
+    private function printMotd(): void
+    {
+        $lines = file_get_contents(__DIR__ . '/../../resources/cli/motd.txt');
+        $lines = explode("\n", $lines);
+        foreach ($lines as $line) {
+            $this->comment($line);
+        }
+
+        $detectedTmiClusterVersion = Composer::detectTmiClusterVersion();
+        $this->comment(sprintf('You are running version %s of tmi-cluster.', $detectedTmiClusterVersion));
+
+        // print an unsupported message if the detected version is not within the supported range of dev-master or semantic version of ^2.3 or ^3.0
+        if (!Composer::isSupportedVersion($detectedTmiClusterVersion)) {
+            $this->warn('This version of tmi-cluster is not supported. Please upgrade to the latest version.');
+        }
+
+        $this->getOutput()->newLine();
+    }
+
+    private function matchOutputType(?string $type): string
+    {
+        switch ($type) {
+            case null:
+            case 'info':
+            case 'out':
+                return 'info';
+            case 'error':
+            case 'err':
+                return 'error';
+            case 'comment':
+                return 'comment';
+            case 'question':
+                return 'question';
+            default:
+                throw new DomainException(sprintf('Unknown output type "%s"', $type));
+        }
     }
 }

@@ -182,7 +182,8 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
         $process = $this->createProcess();
 
         $process->handleOutputUsing(function ($type, $line) use ($process) {
-            call_user_func($this->output, $type, $process->getUuid() . ' | ' . $line);
+            $shortUuid = explode('-', $process->getUuid())[0];
+            call_user_func($this->output, $type, sprintf('[%s] %s', $shortUuid, $line));
         });
 
         event(new ProcessScaled(

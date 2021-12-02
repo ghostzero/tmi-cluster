@@ -14,7 +14,8 @@ class TmiClusterListCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tmi-cluster:list';
+    protected $signature = 'tmi-cluster:list 
+                                {--uuid : Show the complete supervisor uuid }';
 
     /**
      * The console command description.
@@ -49,7 +50,7 @@ class TmiClusterListCommand extends Command
         $processes = SupervisorProcess::all()
             ->map(function (SupervisorProcess $process) {
                 return [
-                    $process->getKey(),
+                    $this->option('uuid') ? $process->getKey() : explode('-', $process->getKey())[0],
                     $process->supervisor ? $process->supervisor->getKey() : 'N/A',
                     $process->state,
                     $process->last_ping_at ? $process->last_ping_at->diffInSeconds() : 'N/A',

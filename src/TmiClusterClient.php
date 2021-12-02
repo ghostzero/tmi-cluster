@@ -186,15 +186,18 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
     {
         $this->working = false;
 
+        $this->log(sprintf('TMI Cluster Client getting evacuated with status code %d...', $status));
+
         // evacuate all current channels to a new process
         /** @var ChannelDistributor $channelDistributor */
         $channelDistributor = app(ChannelDistributor::class);
         if ($channelDistributor instanceof RedisChannelDistributor) {
             $channelDistributor->forgetLocks($this->client->getChannels());
-            $this->log(sprintf('%s Channels unlocked.', count($this->client->getChannels())));
+            $unlockedChannels = count($this->client->getChannels());
+            $this->log(sprintf('Channel Distributor: %d locked channels got unlocked for re-join.', $unlockedChannels));
         }
         $channelDistributor->join(array_keys($this->client->getChannels()), [$this->model->getKey()]);
-        $this->log(sprintf('TMI Client evacuated! Migrated: %s', count($this->client->getChannels())));
+        $this->log(sprintf('TMI Cluster Client evacuated! Migrated: %s', count($this->client->getChannels())));
 
         event(new ClusterClientTerminated($this));
 
