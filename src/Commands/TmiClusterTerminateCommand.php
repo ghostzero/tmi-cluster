@@ -24,12 +24,8 @@ class TmiClusterTerminateCommand extends Command
 
     /**
      * Execute the console command.
-     *
-     * @param SupervisorRepository $repository
-     * @param CommandQueue $commandQueue
-     * @return void
      */
-    public function handle(SupervisorRepository $repository, CommandQueue $commandQueue)
+    public function handle(SupervisorRepository $repository, CommandQueue $commandQueue): int
     {
         if($id = $this->argument('supervisor')) {
             $supervisors = $repository->all()->whereIn('id', [$id]);
@@ -41,5 +37,7 @@ class TmiClusterTerminateCommand extends Command
             $this->info(sprintf('Terminating %s...', $supervisor->getKey()));
             $commandQueue->push($supervisor->getKey(), CommandQueue::COMMAND_SUPERVISOR_TERMINATE);
         }
+
+        return 0;
     }
 }

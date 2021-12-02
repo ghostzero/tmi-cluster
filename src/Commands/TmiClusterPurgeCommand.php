@@ -2,6 +2,7 @@
 
 namespace GhostZero\TmiCluster\Commands;
 
+use Exception;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use Illuminate\Console\Command;
 
@@ -19,16 +20,20 @@ class TmiClusterPurgeCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Purge all stale supervisors.';
+    protected $description = 'Purge all stale supervisors';
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
-        app(SupervisorRepository::class)->flushStale();
+        try {
+            app(SupervisorRepository::class)->flushStale();
+        } catch (Exception $e) {
+            $this->error($e->getMessage());
+
+            return 1;
+        }
 
         $this->info('Stale supervisors have been purged.');
 

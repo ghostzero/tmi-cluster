@@ -21,12 +21,10 @@ class TmiClusterListCommand extends Command
      *
      * @var string
      */
-    protected $description = 'List all active supervisors.';
+    protected $description = 'List all active supervisors';
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {

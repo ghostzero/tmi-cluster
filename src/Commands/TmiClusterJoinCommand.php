@@ -22,12 +22,10 @@ class TmiClusterJoinCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Join a channel in one irc process instance.';
+    protected $description = 'Join a channel in one irc process instance';
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
