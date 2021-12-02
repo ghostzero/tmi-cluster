@@ -2,14 +2,12 @@
 
 namespace GhostZero\TmiCluster;
 
+use Exception;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
-use Illuminate\Cache\RedisLock;
+use GhostZero\TmiCluster\Traits\Lockable;
 use Illuminate\Contracts\Cache\LockTimeoutException;
-use Illuminate\Contracts\Redis\Factory;
-use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Collection;
-use Predis\ClientInterface;
 use Throwable;
 
 /**
@@ -31,11 +29,17 @@ use Throwable;
  */
 class AutoScale
 {
+    use Lockable;
+
     private float $counter;
 
     public function __construct()
     {
-        $this->counter = 0;
+        try {
+            $this->counter = random_int(0, 10);
+        } catch (Exception $e) {
+            $this->counter = 0;
+        }
     }
 
     public function scale(Supervisor $supervisor): void
@@ -63,21 +67,6 @@ class AutoScale
         }
     }
 
-    /**
-     * Get the Redis connecDashbtion instance.
-     *
-     * @return Connection|ClientInterface
-     */
-    private function connection()
-    {
-        return app(Factory::class)->connection('tmi-cluster');
-    }
-
-    private function lock(string $name, int $seconds = 0, ?string $owner = null): RedisLock
-    {
-        return new RedisLock($this->connection(), $name, $seconds, $owner);
-    }
-
     private function releaseStaleSupervisors(Supervisor $supervisor): void
     {
         if ($this->counter % 10 !== 0) return;
@@ -88,7 +77,7 @@ class AutoScale
             // Lock acquired after waiting maximum of 5 seconds...
             app(SupervisorRepository::class)->flushStale();
         } catch (LockTimeoutException $e) {
-            $supervisor->output(null, 'Unable to acquire lock...');
+            $supervisor->output(null, 'Unable to acquire flush stale lock...');
         } finally {
             optional($lock)->release();
         }

@@ -90,4 +90,19 @@ class DatabaseChannelManager implements ChannelManager
             ->pluck('id')
             ->toArray();
     }
+
+    /**
+     * Returns all channels that are not revoked and have reconnected equals true.
+     *
+     * @param array $channels channels that are currently connected
+     */
+    public function disconnected(array $channels): array
+    {
+        return Channel::query()
+            ->whereNotIn('id', array_map(fn($channel) => $this->getKey($channel), $channels))
+            ->where(['revoked' => false])
+            ->where(['reconnect' => true])
+            ->pluck('id')
+            ->toArray();
+    }
 }

@@ -29,6 +29,28 @@ class DatabaseChannelManagerTest extends TestCase
         self::assertNotContains('#tmi_inspector', $authorized);
     }
 
+    public function testChannelIsDisconnected(): void
+    {
+        $user = new TwitchLogin('ghostzero');
+
+        $this->getChannelManager()->authorize($user, [
+            'reconnect' => true,
+        ]);
+
+        $user = new TwitchLogin('tmi_inspector');
+
+        $this->getChannelManager()->authorize($user, [
+            'reconnect' => true,
+        ]);
+
+        $disconnected = $this->getChannelManager()->disconnected([
+            'ghostzero',
+        ]);
+
+        self::assertNotContains('#ghostzero', $disconnected);
+        self::assertContains('#tmi_inspector', $disconnected);
+    }
+
     public function testChannelIsNotAuthorizedAfterRevoke(): void
     {
         $user = new TwitchLogin('ghostzero');
@@ -48,7 +70,7 @@ class DatabaseChannelManagerTest extends TestCase
         self::assertNotContains('#ghostzero', $authorized);
     }
 
-    private function getChannelManager(): ChannelManager
+    private function getChannelManager(): DatabaseChannelManager
     {
         return app(DatabaseChannelManager::class);
     }

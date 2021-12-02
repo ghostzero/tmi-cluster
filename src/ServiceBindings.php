@@ -15,6 +15,7 @@ trait ServiceBindings
         // General services...
         AutoScale::class,
         AutoCleanup::class,
+        AutoReconnect::class,
         TmiClusterClient::class,
 
         // Repository services...

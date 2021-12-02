@@ -24,6 +24,7 @@ class Supervisor implements Pausable, Restartable, Terminable
     public Models\Supervisor $model;
     public array $processPools = [];
     private AutoScale $autoScale;
+    private AutoReconnect $autoReconnect;
     private CommandQueue $commandQueue;
     private Closure $output;
 
@@ -32,6 +33,7 @@ class Supervisor implements Pausable, Restartable, Terminable
         $this->model = $model;
         $this->processPools = $this->createProcessPools();
         $this->autoScale = app(AutoScale::class);
+        $this->autoReconnect = app(AutoReconnect::class);
         $this->commandQueue = app(CommandQueue::class);
         $this->commandQueue->flush($this->model->getKey());
         $this->output = static function () {
@@ -74,6 +76,7 @@ class Supervisor implements Pausable, Restartable, Terminable
             // processing queued jobs. If they have died, we will restart them each here.
             if ($this->working) {
                 $this->autoScale();
+                $this->autoReconnect();
 
                 $this->pools()->each(fn(ProcessPool $x) => $x->monitor());
             }
@@ -102,6 +105,11 @@ class Supervisor implements Pausable, Restartable, Terminable
     private function autoScale(): void
     {
         $this->autoScale->scale($this);
+    }
+
+    private function autoReconnect(): void
+    {
+        $this->autoReconnect->handle($this);
     }
 
     private function createProcessPools(): array
