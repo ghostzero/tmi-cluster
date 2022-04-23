@@ -1,6 +1,8 @@
 const numeral = require('numeral');
 
-window.Vue = require('vue');
+import Vue from 'vue';
+
+Vue.prototype.$http = require('axios');
 
 window.Vue.prototype.$http = require('axios');
 
