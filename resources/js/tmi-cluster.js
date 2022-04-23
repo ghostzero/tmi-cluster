@@ -4,8 +4,6 @@ import Vue from 'vue';
 
 Vue.prototype.$http = require('axios');
 
-window.Vue.prototype.$http = require('axios');
-
 window.chartColors = {
     color_1: '#6d00ff',
     color_2: '#994fff',
