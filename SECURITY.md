@@ -11,5 +11,5 @@ Due to the fact that I do the project alone, I only support the latest major ver
 
 ## Reporting a Vulnerability
 
-I ask you to report vulnerabilities as a direct message to GhostZero#0001 in Discord.  
+I ask you to report vulnerabilities as a direct message to `GhostZero#0001` in Discord.  
 Alternatively, an email can be sent to rene@preuss.io, but I very rarely check my emails.
