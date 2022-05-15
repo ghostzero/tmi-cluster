@@ -22,7 +22,9 @@ class TmiClusterCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tmi-cluster {--watch : Watches for file changes and restarts the cluster}';
+    protected $signature = 'tmi-cluster
+                            {--watch : Automatically reload the supervisor when the application is modified}
+                            {--poll : Use file system polling while watching in order to watch files over a network}';
 
     /**
      * The console command description.
