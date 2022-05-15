@@ -6,18 +6,23 @@ namespace GhostZero\TmiCluster\Commands;
 
 use DomainException;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
+use GhostZero\TmiCluster\Events\SupervisorLooped;
 use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Support\Composer;
+use GhostZero\TmiCluster\Watchable;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Event;
 
 class TmiClusterCommand extends Command
 {
+    use Watchable;
+
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'tmi-cluster';
+    protected $signature = 'tmi-cluster {--watch : Watches for file changes and restarts the cluster}';
 
     /**
      * The console command description.
@@ -63,6 +68,22 @@ class TmiClusterCommand extends Command
         });
 
         $supervisor->scale(config('tmi-cluster.auto_scale.processes.min'));
+
+        if ($this->option('watch')) {
+            $watcher = $this->startServerWatcher();
+            Event::listen(function (SupervisorLooped $event) use ($watcher) {
+                if ($watcher->isRunning() &&
+                    $watcher->getIncrementalOutput()) {
+                    $this->info('Application change detected. Restarting supervisor…');
+                    $event->supervisor->restart();
+                } elseif ($watcher->isTerminated()) {
+                    $this->error(
+                        'Watcher process has terminated. Please ensure Node and chokidar are installed.' . PHP_EOL .
+                        $watcher->getErrorOutput()
+                    );
+                }
+            });
+        }
 
         $supervisor->monitor();
 

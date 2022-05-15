@@ -6,6 +6,6 @@
  \__|_| |_| |_|_|      \___|_|\__,_|___/\__\___|_|
 
 Thanks for using the tmi-cluster! If you have any questions, suggestions, or
-complaints, please contact me at: https://discord.gg/qsxVMNg
+complaints, please contact me at: https://ghostzero.dev/discord
 
 Official Documentation: https://tmiphp.com/docs/tmi-cluster.html

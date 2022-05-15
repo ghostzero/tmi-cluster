@@ -236,4 +236,27 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | File Watching
+    |--------------------------------------------------------------------------
+    |
+    | The following list of files and directories will be watched when using
+    | the --watch option offered by TMI-Cluster. If any of the directories and
+    | files are changed, TMI-Cluster will automatically restart your supervisor.
+    |
+    */
+
+    'watch' => [
+        'app',
+        'bootstrap',
+        'config',
+        'database',
+        'public/**/*.php',
+        'resources/**/*.php',
+        'routes',
+        'composer.lock',
+        '.env',
+    ],
+
 ];
