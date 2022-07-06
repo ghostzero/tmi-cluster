@@ -6,6 +6,7 @@ namespace GhostZero\TmiCluster\Commands;
 
 use DomainException;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
+use GhostZero\TmiCluster\Inspiring;
 use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Support\Composer;
 use Illuminate\Console\Command;
@@ -32,6 +33,8 @@ class TmiClusterCommand extends Command
     public function handle(): int
     {
         $this->printMotd();
+
+        Inspiring::handle($this);
 
         try {
             /** @var Supervisor $supervisor */

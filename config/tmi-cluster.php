@@ -128,7 +128,7 @@ return [
     | TMI Supervisor & Process Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the timings, we recommend to leave them on default
+    | Here you may specify the timings, we recommend leaving them on default
     | and not to change them. You can delete this section if you always want
     | to have the package defaults.
     |
@@ -175,7 +175,7 @@ return [
     | Twitch Helix Credentials
     |--------------------------------------------------------------------------
     |
-    | Only required to configure, if you plan to use the auto cleanup feature.
+    | Only required to configure if you plan to use the auto cleanup feature.
     |
     */
 
@@ -217,7 +217,20 @@ return [
     | TMI Cluster Channel Manager
     |--------------------------------------------------------------------------
     |
-    | ...
+    | In v3, we added many new ways to automatically manage your tmi-cluster,
+    | including the ability to automatically remove channels that are no longer
+    | active within your tmi-cluster.
+    |
+    | Stale channels are channels that have not been active within the last
+    | 168 hours (by default). They will be automatically parted by the auto-
+    | cleanup, this also includes channels which have the `reconnect` flag,
+    | but they will be automatically reconnected and acknowledged.
+    |
+    | To avoid channels to become stale, you need to call the `join` or
+    | `acknowledged` method within the ChannelManager contract.
+    |
+    | You will find more information about the channel manager here:
+    | https://tmiphp.com/docs/tmi-cluster.html#channel-management
     |
     */
 
@@ -234,6 +247,34 @@ return [
             'restrict_messages' => false,
             'stale' => 168,
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | TMI Cluster Telemetry
+    |--------------------------------------------------------------------------
+    |
+    | We collect some information about your tmi-cluster installation,
+    | in exchange you will get an inspiring quote. This will help us to
+    | improve the package and make it even better.
+    |
+    | Including the following data:
+    |   - IP Address - To see where the developer/server is located.
+    |   - OS - To check if we still need to support different operating systems.
+    |   - PHP Version - To check if we still need to support different versions.
+    |   - TMI-Cluster Version - To check if you're still using an outdated version.
+    |   - TMI-Cluster Metrics - To see how large your cluster scales.
+    |   - Developer Name (optional) - You can provide a name, so we can identify you.
+    |
+    | Since we're a european company, we also have some data privacy by default ^.^
+    | You will find them here: https://bitinflow.com/legal/privacy/
+    |
+    */
+
+    'inspiring' => [
+        'enabled' => true,
+
+        'developer' => '',
     ],
 
 ];

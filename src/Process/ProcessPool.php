@@ -65,7 +65,7 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
 
             if (!$filtered) {
                 event(new ProcessScaled(
-                    sprintf('Auto Scaling: Process removed'),
+                    'Auto Scaling: Process removed',
                     sprintf('Terminating process instance: %s', $process['process']->getUuid()),
                     'SUPERVISOR_PROCESS_TERMINATE',
                     sprintf('At %s an process was removed in response of terminated process.', date('Y-m-d H:i:s'))
@@ -148,7 +148,7 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
             $process['process']->terminate();
 
             event(new ProcessScaled(
-                sprintf('Auto Scaling: Process terminated'),
+                'Auto Scaling: Process terminated',
                 sprintf('Terminating process instance: %s', $process['process']->getUuid()),
                 'SUPERVISOR_PROCESS_TERMINATE',
                 sprintf('At %s an process was taken out of service in response of a scale in.', date('Y-m-d H:i:s'))
@@ -187,7 +187,7 @@ class ProcessPool implements Countable, Pausable, Restartable, Terminable
         });
 
         event(new ProcessScaled(
-            sprintf('Auto Scaling: Process launched'),
+            'Auto Scaling: Process launched',
             sprintf('Launching a new process instance: %s', $process->getUuid()),
             'SUPERVISOR_PROCESS_LAUNCH',
             sprintf(
