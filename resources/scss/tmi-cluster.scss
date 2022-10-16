@@ -60,8 +60,8 @@ body {
   /* Read next point */
   unicode-range: U+000-5FF; /* Download only latin glyphs */
   src: local('JetBrains Mono'),
-  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
-  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff') format('woff');
+  url('https://cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
+  url('https://cdn.bitinflow.com/fonts/JetBrainsMono-Regular.woff') format('woff');
 }
 
 @font-face {
@@ -72,8 +72,8 @@ body {
   /* Read next point */
   unicode-range: U+000-5FF; /* Download only latin glyphs */
   src: local('JetBrains Mono Extra Bold'),
-  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2') format('woff2'),
-  url('https://fa-cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff') format('woff');
+  url('https://cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff2') format('woff2'),
+  url('https://cdn.bitinflow.com/fonts/JetBrainsMono-ExtraBold.woff') format('woff');
 }
 
 body {
