@@ -21,7 +21,7 @@ class TmiClusterAuthorizeCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Install all TMI Cluster assets & configurations';
+    protected $description = 'Authorize a given channel(s) to join the TMI Cluster';
 
     /**
      * Execute the console command.
