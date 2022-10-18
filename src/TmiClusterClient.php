@@ -182,7 +182,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         $this->working = true;
     }
 
-    public function terminate($status = 0): void
+    public function terminate(int $status = 0): void
     {
         $this->working = false;
 

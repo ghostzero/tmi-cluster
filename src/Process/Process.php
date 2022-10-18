@@ -61,7 +61,7 @@ class Process implements Pausable, Restartable, Terminable
         $this->start();
     }
 
-    public function terminate($status = 0): void
+    public function terminate(int $status = 0): void
     {
         $this->sendSignal(SIGINT);
     }

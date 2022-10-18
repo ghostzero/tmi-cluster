@@ -31,7 +31,7 @@ abstract class ClusterClient
 
     abstract public function restart(): void;
 
-    abstract public function terminate($status = 0): void;
+    abstract public function terminate(int $status = 0): void;
 
     abstract public function getTmiClient(): Client;
 

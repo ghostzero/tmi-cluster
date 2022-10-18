@@ -33,7 +33,7 @@ class SupervisorRepository implements Repository
     /**
      * @inheritDoc
      */
-    public function all($columns = ['*']): Collection
+    public function all(array $columns = ['*']): Collection
     {
         return Models\Supervisor::all($columns)->collect();
     }

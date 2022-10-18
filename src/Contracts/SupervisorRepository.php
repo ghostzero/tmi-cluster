@@ -23,7 +23,7 @@ interface SupervisorRepository
      * @param string[] $columns
      * @return Models\Supervisor[]|Collection
      */
-    public function all($columns = ['*']): Collection;
+    public function all(array $columns = ['*']): Collection;
 
     /**
      * Flush all stale supervisors from database.

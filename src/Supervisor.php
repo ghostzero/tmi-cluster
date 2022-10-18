@@ -161,7 +161,7 @@ class Supervisor implements Pausable, Restartable, Terminable
         $this->pools()->each(fn(ProcessPool $x) => $x->restart());
     }
 
-    public function terminate($status = 0): void
+    public function terminate(int $status = 0): void
     {
         $this->working = false;
 
