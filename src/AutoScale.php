@@ -63,6 +63,7 @@ class AutoScale
 
             $this->releaseStaleSupervisors($supervisor);
         } catch (Throwable $exception) {
+            $supervisor->output(null, $exception->getMessage());
             $supervisor->output(null, $exception->getTraceAsString());
         }
     }

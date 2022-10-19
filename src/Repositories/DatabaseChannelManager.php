@@ -9,9 +9,16 @@ use GhostZero\TmiCluster\Contracts\Invitable;
 use GhostZero\TmiCluster\Models\Channel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class DatabaseChannelManager implements ChannelManager
 {
+    /**
+     * There is limit 65,535 (2^16-1) placeholders.
+     * We will chunk channels in 50K operations.
+     */
+    protected const MAX_CHANNELS_PER_EXECUTION = 50000;
+
     /**
      * @inheritDoc
      */
@@ -43,10 +50,16 @@ class DatabaseChannelManager implements ChannelManager
      */
     public function authorized(array $channels): array
     {
-        return Channel::query()
-            ->whereIn('id', array_map(fn($channel) => $this->getKey($channel), $channels))
-            ->where(['revoked' => false])
-            ->pluck('id')
+        return Collection::make($channels)
+            ->chunk(self::MAX_CHANNELS_PER_EXECUTION)
+            ->each(function (Collection $channels) {
+                return Channel::query()
+                    ->whereIn('id', $channels->map(fn(string $channel) => $this->getKey($channel)))
+                    ->where(['revoked' => false])
+                    ->pluck('id')
+                    ->toArray();
+            })
+            ->collapse()
             ->toArray();
     }
 
@@ -55,11 +68,15 @@ class DatabaseChannelManager implements ChannelManager
      */
     public function acknowledged(array $channels): self
     {
-        Channel::query()
-            ->whereIn('id', array_map(fn($channel) => $this->getKey($channel), $channels))
-            ->update([
-                'acknowledged_at' => now(),
-            ]);
+        Collection::make($channels)
+            ->chunk(self::MAX_CHANNELS_PER_EXECUTION)
+            ->each(function (Collection $channels) {
+                Channel::query()
+                    ->whereIn('id', $channels->map(fn(string $channel) => $this->getKey($channel)))
+                    ->update([
+                        'acknowledged_at' => now(),
+                    ]);
+            });
 
         return $this;
     }

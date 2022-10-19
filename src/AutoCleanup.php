@@ -41,6 +41,7 @@ class AutoCleanup
 
             $client->log(sprintf('Cleanup complete! Parted: %s', count($channels)));
         } catch (Exception $e) {
+            $client->log($e->getMessage());
             $client->log($e->getTraceAsString());
         }
     }
