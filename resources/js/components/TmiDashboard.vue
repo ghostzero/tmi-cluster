@@ -175,7 +175,7 @@
                 <th scope="row">{{ process.id_short }}</th>
                 <td>{{ process.state }}</td>
                 <td>{{ process.last_ping_at_in_seconds }}s</td>
-                <td>{{ process.metrics.channels|formatNumber }}</td>
+                <td>{{ process.metrics ? (process.metrics.channels|formatNumber) : 'N/A' }}</td>
               </tr>
               </tbody>
             </table>

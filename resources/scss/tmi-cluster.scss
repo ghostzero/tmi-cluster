@@ -1,3 +1,5 @@
+@use "sass:math";
+
 // Variables
 @import 'variables';
 
@@ -103,7 +105,7 @@ body {
 }
 
 @for $i from 1 through 9 {
-  $opacity: ($i / 10);
+  $opacity: math.div($i, 10);
   .opacity-#{($i*10)}{
     opacity: $opacity;
   }
