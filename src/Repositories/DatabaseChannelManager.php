@@ -52,7 +52,7 @@ class DatabaseChannelManager implements ChannelManager
     {
         return Collection::make($channels)
             ->chunk(self::MAX_CHANNELS_PER_EXECUTION)
-            ->each(function (Collection $channels) {
+            ->map(function (Collection $channels) {
                 return Channel::query()
                     ->whereIn('id', $channels->map(fn(string $channel) => $this->getKey($channel)))
                     ->where(['revoked' => false])
