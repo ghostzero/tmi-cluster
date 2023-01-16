@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster\Commands;
 
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
+use GhostZero\TmiCluster\Events\ClusterClientBootstrap;
 use GhostZero\TmiCluster\TmiClusterClient;
 use Illuminate\Console\Command;
 
@@ -32,7 +33,11 @@ class TmiClusterProcessCommand extends Command
      */
     public function handle(): int
     {
-        TmiClusterClient::make($this->clusterClientOptions(), function ($type, $line) {
+        $options = $this->clusterClientOptions();
+
+        event(new ClusterClientBootstrap($options));
+
+        TmiClusterClient::make($options, function ($type, $line) {
             $this->info($line);
         })->connect();
 

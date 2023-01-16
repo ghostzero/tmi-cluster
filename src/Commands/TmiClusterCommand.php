@@ -6,6 +6,7 @@ namespace GhostZero\TmiCluster\Commands;
 
 use DomainException;
 use GhostZero\TmiCluster\Contracts\SupervisorRepository;
+use GhostZero\TmiCluster\Events\SupervisorBootstrap;
 use GhostZero\TmiCluster\Events\SupervisorLooped;
 use GhostZero\TmiCluster\Supervisor;
 use GhostZero\TmiCluster\Support\Composer;
@@ -39,6 +40,8 @@ class TmiClusterCommand extends Command
     public function handle(): int
     {
         $this->printMotd();
+
+        event(new SupervisorBootstrap());
 
         try {
             /** @var Supervisor $supervisor */
