@@ -16,7 +16,8 @@ class TmiClusterHealthCommand extends Command
      * @var string
      */
     protected $signature = 'tmi-cluster:health
-                                {--host-only : Only check all supervisors on the same host}';
+                                {--host-only : Only check all supervisors on the same host}
+                                {--hostname= : Change the hostname to check for}';
 
     /**
      * The console command description.
@@ -49,7 +50,12 @@ class TmiClusterHealthCommand extends Command
     private function getHostSupervisors(SupervisorRepository $repository): Collection
     {
         return $repository->all()->filter(function (Supervisor $supervisor) {
-            return str_starts_with(sprintf('%s-', $supervisor->getKey()), gethostname());
+            return str_starts_with(sprintf('%s-', $supervisor->getKey()), $this->getHostname());
         });
+    }
+
+    private function getHostname(): string
+    {
+        return $this->option('hostname') ?? gethostname();
     }
 }
