@@ -85,6 +85,7 @@ class TmiClusterServiceProvider extends ServiceProvider
                 Commands\TmiClusterAuthorizeCommand::class,
                 Commands\TmiClusterCommand::class,
                 Commands\TmiClusterFeaturesCommand::class,
+                Commands\TmiClusterHealthCommand::class,
                 Commands\TmiClusterListCommand::class,
                 Commands\TmiClusterJoinCommand::class,
                 Commands\TmiClusterProcessCommand::class,
