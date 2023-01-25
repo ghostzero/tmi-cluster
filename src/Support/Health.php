@@ -18,7 +18,7 @@ class Health
         $operational = $supervisors
             ->sum(function (Supervisor $supervisor) {
                 return $supervisor->processes->filter(function (SupervisorProcess $process) {
-                    return $this->isInConnectedState($process) || $this->isInInitialState($process);
+                    return self::isInConnectedState($process) || self::isInInitialState($process);
                 })->count();
             });
 
@@ -33,7 +33,7 @@ class Health
     /**
      * Consider a process in initial state if state is in initialize and ping is within the threshold.
      */
-    private function isInInitialState(SupervisorProcess $process): bool
+    private static function isInInitialState(SupervisorProcess $process): bool
     {
         return $process->state === SupervisorProcess::STATE_INITIALIZE
             && $process->last_ping_at->diffInSeconds() < self::INRESPONSIVE_THRESHOLD;
@@ -42,7 +42,7 @@ class Health
     /**
      * Consider a process in connected state if state is in connected and ping is within the threshold.
      */
-    private function isInConnectedState(SupervisorProcess $process): bool
+    private static function isInConnectedState(SupervisorProcess $process): bool
     {
         return $process->state === SupervisorProcess::STATE_CONNECTED
             && $process->last_ping_at->diffInSeconds() < self::INRESPONSIVE_THRESHOLD;
