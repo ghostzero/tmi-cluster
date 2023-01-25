@@ -15,8 +15,8 @@
     "ext-pcntl": "*",
     "ext-posix": "*",
     "ghostzero/tmi": "^2.1",
-    "illuminate/console": "^8.1|^9.0",
-    "illuminate/support": "^8.1|^9.0",
+    "illuminate/console": "^8.65|^9.0",
+    "illuminate/support": "^8.65|^9.0",
     "predis/predis": "^1.1"
   },
   "require-dev": {
@@ -44,6 +44,12 @@
         "TmiCluster": "GhostZero\\TmiCluster\\Facades\\TmiCluster"
       }
     }
+  },
+  "scripts": {
+    "lowest-test": [
+      "Composer\\Config::disableProcessTimeout",
+      "composer update --prefer-lowest --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix"
+    ]
   },
   "suggest": {
     "romanzipp/laravel-twitch": "Rquired to use the cluster auto cleanup feature (^3.0)."
