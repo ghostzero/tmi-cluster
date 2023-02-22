@@ -15,8 +15,8 @@
     "ext-pcntl": "*",
     "ext-posix": "*",
     "ghostzero/tmi": "^2.1",
-    "illuminate/console": "^v8.83|^9.0",
-    "illuminate/support": "^v8.83|^9.0",
+    "illuminate/console": "^v8.83|^9.0|^10.0",
+    "illuminate/support": "^v8.83|^9.0|^10.0",
     "predis/predis": "^1.1",
     "nesbot/carbon": "^2.62.1"
   },
