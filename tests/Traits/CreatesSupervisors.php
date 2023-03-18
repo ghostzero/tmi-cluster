@@ -5,6 +5,7 @@ namespace GhostZero\TmiCluster\Tests\Traits;
 
 
 use Carbon\CarbonInterface;
+use GhostZero\TmiCluster\Contracts\SupervisorRepository;
 use GhostZero\TmiCluster\Models\Supervisor;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use Illuminate\Support\Str;
@@ -31,5 +32,20 @@ trait CreatesSupervisors
         ]);
 
         return (string)$process->getKey();
+    }
+
+    public function createdLoopedSupervisor(int $scale): \GhostZero\TmiCluster\Supervisor
+    {
+        /** @var \GhostZero\TmiCluster\Supervisor $supervisor */
+        $supervisor = app(SupervisorRepository::class)->create();
+
+        self::assertStringStartsWith(gethostname(), $supervisor->model->getKey());
+
+        $supervisor->scale($scale);
+        $supervisor->loop();
+
+        self::assertCount(2, $supervisor->processes());
+
+        return $supervisor;
     }
 }

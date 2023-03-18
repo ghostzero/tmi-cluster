@@ -3,6 +3,7 @@
 namespace GhostZero\TmiCluster\Models;
 
 use Carbon\CarbonInterface;
+use GhostZero\TmiCluster\Contracts\HasPrometheusMetrics;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,7 +17,7 @@ use Illuminate\Support\Collection;
  * @property SupervisorProcess[]|Collection processes
  * @property array|null metrics
  */
-class Supervisor extends Model
+class Supervisor extends Model implements HasPrometheusMetrics
 {
     use SoftDeletes;
 
@@ -40,5 +41,12 @@ class Supervisor extends Model
     public function processes(): HasMany
     {
         return $this->hasMany(SupervisorProcess::class);
+    }
+
+    public function getPrometheusMetrics(): Collection
+    {
+        return Collection::make([
+            'processes' => $this->processes()->count(),
+        ])->merge($this->metrics ?? []);
     }
 }

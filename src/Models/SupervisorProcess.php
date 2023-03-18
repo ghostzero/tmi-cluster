@@ -3,9 +3,11 @@
 namespace GhostZero\TmiCluster\Models;
 
 use Carbon\CarbonInterface;
+use GhostZero\TmiCluster\Contracts\HasPrometheusMetrics;
 use GhostZero\TmiCluster\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 /**
  * @property string id
@@ -18,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string memory_usage
  * @property array|null metrics
  */
-class SupervisorProcess extends Model
+class SupervisorProcess extends Model implements HasPrometheusMetrics
 {
     public const STATE_INITIALIZE = 'initialize';
     public const STATE_CONNECTED = 'connected';
@@ -50,5 +52,10 @@ class SupervisorProcess extends Model
     public function getMemoryUsageAttribute(): string
     {
         return isset($this->metrics['memory_usage']) ? Str::convert($this->metrics['memory_usage']) : 'N/A';
+    }
+
+    public function getPrometheusMetrics(): Collection
+    {
+        return Collection::make($this->metrics ?? []);
     }
 }
