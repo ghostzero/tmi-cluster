@@ -26,13 +26,10 @@ class Supervisor extends Model
 
     protected $guarded = [];
 
-    protected $dates = [
-        'last_ping_at',
-    ];
-
     protected $casts = [
         'options' => 'array',
         'metrics' => 'array',
+        'last_ping_at' => 'datetime',
     ];
 
     public function getIsStaleAttribute(): bool

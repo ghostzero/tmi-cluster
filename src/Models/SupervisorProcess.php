@@ -30,13 +30,10 @@ class SupervisorProcess extends Model
 
     protected $guarded = [];
 
-    protected $dates = [
-        'last_ping_at',
-    ];
-
     protected $casts = [
         'channels' => 'array',
         'metrics' => 'array',
+        'last_ping_at' => 'datetime',
     ];
 
     public function supervisor(): BelongsTo
