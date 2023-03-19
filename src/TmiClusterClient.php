@@ -43,6 +43,7 @@ use Throwable;
 class TmiClusterClient extends ClusterClient implements Pausable, Restartable, Terminable
 {
     use ListensForSignals;
+    use RequestsMemory;
 
     private bool $working = true;
     private Builder|SupervisorProcess $model;
@@ -80,6 +81,14 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         $this->listenForSignals();
         $this->registerPeriodicTimer();
         $this->registerEvents();
+
+        if ($this->requestMemoryLimit($options->getMemory())) {
+            $this->log("Requested memory limit of {$options->getMemory()} MB.");
+        } else {
+            $this->log("Failed to request memory limit of {$options->getMemory()} MB.");
+        }
+
+        $this->log(sprintf('Current memory limit: %s MB', round($this->getMemoryLimit() / 1024 / 1024)));
 
         event(new ClusterClientRegistered($this));
     }
@@ -258,7 +267,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         call_user_func($this->output, null, $message);
     }
 
-    public function getUuid()
+    public function getUuid(): string
     {
         return $this->model->getKey();
     }

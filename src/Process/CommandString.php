@@ -22,7 +22,7 @@ class CommandString
     {
         return sprintf('--supervisor=%s --memory=%s',
             $options->getSupervisor(),
-            $options->getMemoryLimit()
+            $options->getMemory()
         );
     }
 }

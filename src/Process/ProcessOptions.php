@@ -33,8 +33,8 @@ class ProcessOptions
         return $this->options['timeout'] ?? config('tmi-cluster.process.timeout', 60);
     }
 
-    public function getMemoryLimit(): int
+    public function getMemory(): int
     {
-        return $this->options['memory_limit'] ?? config('tmi-cluster.process.memory_limit', 128);
+        return $this->options['memory'] ?? config('tmi-cluster.process.memory', 128);
     }
 }

@@ -156,7 +156,7 @@ return [
     'process' => [
         'stale' => 90,
         'timeout' => 60,
-        'memory_limit' => 128,
+        'memory' => 128,
         'periodic_timer' => 2,
     ],
 
@@ -165,7 +165,7 @@ return [
     | TMI Cluster Auto Scaling Thresholds
     |--------------------------------------------------------------------------
     |
-    | Here you can specify all auto scaling thresholds. Depending on the size
+    | Here you can specify all auto-scaling thresholds. Depending on the size
     | of your cluster it is recommended to adjust the thresholds. For more
     | information consult our documentation.
     |
