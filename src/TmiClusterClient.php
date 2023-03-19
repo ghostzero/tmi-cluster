@@ -83,7 +83,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         $this->registerEvents();
 
         if ($this->requestMemoryLimit($options->getMemory())) {
-            $this->log("Requested memory limit of {$options->getMemory()} MB.");
+            $this->log("Successfully requested memory limit of {$options->getMemory()} MB.");
         } else {
             $this->log("Failed to request memory limit of {$options->getMemory()} MB.");
         }
