@@ -4,7 +4,7 @@ namespace GhostZero\TmiCluster\Listeners;
 
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 
-class MonitorTmiClusterMemory
+class MonitorClusterClientMemory
 {
     public function handle(PeriodicTimerCalled $event): void
     {

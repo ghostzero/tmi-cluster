@@ -4,7 +4,7 @@ namespace GhostZero\TmiCluster\Tests\TestCases;
 
 use GhostZero\TmiCluster\Contracts\ClusterClientOptions;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
-use GhostZero\TmiCluster\Listeners\MonitorTmiClusterMemory;
+use GhostZero\TmiCluster\Listeners\MonitorClusterClientMemory;
 use GhostZero\TmiCluster\Tests\TestCase;
 use GhostZero\TmiCluster\TmiClusterClient;
 use Mockery;
@@ -13,7 +13,7 @@ class MonitorClusterClientMemoryTest extends TestCase
 {
     public function testTmiClusterIsTerminatedWhenUsingToMuchMemory(): void
     {
-        $monitor = new MonitorTmiClusterMemory();
+        $monitor = new MonitorClusterClientMemory();
 
         $clusterClient = Mockery::mock(TmiClusterClient::class);
         $clusterClient->options = new ClusterClientOptions(
@@ -32,7 +32,7 @@ class MonitorClusterClientMemoryTest extends TestCase
 
     public function testTmiClusterIsNotTerminatedWhenUsingToMuchMemory(): void
     {
-        $monitor = new MonitorTmiClusterMemory();
+        $monitor = new MonitorClusterClientMemory();
 
         $clusterClient = Mockery::mock(TmiClusterClient::class);
         $clusterClient->options = new ClusterClientOptions(

@@ -19,7 +19,7 @@ trait EventMap
         ],
 
         Events\PeriodicTimerCalled::class => [
-            Listeners\MonitorTmiClusterMemory::class,
+            Listeners\MonitorClusterClientMemory::class,
         ],
     ];
 }
