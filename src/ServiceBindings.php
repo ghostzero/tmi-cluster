@@ -7,7 +7,7 @@ use GhostZero\TmiCluster\Contracts;
 trait ServiceBindings
 {
     /**
-     * All of the service bindings for our TMI Cluster.
+     * All the service bindings for our TMI Cluster.
      *
      * @var array
      */

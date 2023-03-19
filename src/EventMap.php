@@ -5,13 +5,21 @@ namespace GhostZero\TmiCluster;
 trait EventMap
 {
     /**
-     * All of the TMI Cluster event / listener mappings.
+     * All the TMI Cluster event / listener mappings.
      *
      * @var array
      */
-    protected $events = [
+    protected array $events = [
         Events\ProcessScaled::class => [
             Listeners\SendNotification::class,
+        ],
+
+        Events\SupervisorLooped::class => [
+            Listeners\MonitorSupervisorMemory::class,
+        ],
+
+        Events\PeriodicTimerCalled::class => [
+            Listeners\MonitorTmiClusterMemory::class,
         ],
     ];
 }

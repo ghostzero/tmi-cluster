@@ -8,6 +8,14 @@ use GhostZero\Tmi\Client;
 abstract class ClusterClient
 {
     public const QUEUE_INPUT = 'input';
+    public ClusterClientOptions $options;
+    public Closure $output;
+
+    public function __construct(ClusterClientOptions $options, Closure $output)
+    {
+        $this->options = $options;
+        $this->output = $output;
+    }
 
     /**
      * Starts a new TMI Client process.
@@ -38,4 +46,9 @@ abstract class ClusterClient
     abstract public function log(string $message): void;
 
     abstract public function getUuid();
+
+    public function memoryUsage(): float
+    {
+        return memory_get_usage() / 1024 / 1024;
+    }
 }

@@ -228,4 +228,9 @@ class Supervisor implements Pausable, Restartable, Terminable
             app(SupervisorJoinHandler::class)->handle($this, $channelsToJoin);
         }
     }
+
+    public function memoryUsage(): float
+    {
+        return memory_get_usage() / 1024 / 1024;
+    }
 }

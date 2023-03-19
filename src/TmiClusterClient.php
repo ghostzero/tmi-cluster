@@ -20,7 +20,10 @@ use GhostZero\TmiCluster\Events\ClusterClientTerminated;
 use GhostZero\TmiCluster\Events\PeriodicTimerCalled;
 use GhostZero\TmiCluster\Models\SupervisorProcess;
 use GhostZero\TmiCluster\Repositories\RedisChannelDistributor;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Throwable;
 
 /**
@@ -32,6 +35,7 @@ use Throwable;
  *  5 - IRC Client disconnected (restart).
  *  6 - Exit via CommandQueue (restart).
  *  7 - Debug exit.
+ *  8 - Out of memory.
  *
  * Class TmiClusterClient
  * @package GhostZero\TmiCluster
@@ -41,11 +45,9 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
     use ListensForSignals;
 
     private bool $working = true;
-    private $model;
+    private Builder|SupervisorProcess $model;
     private Client $client;
-    private ClusterClientOptions $options;
     private CommandQueue $commandQueue;
-    private Closure $output;
     private Lock $lock;
     private AutoCleanup $autoCleanup;
 
@@ -61,14 +63,14 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
 
     private function __construct(ClusterClientOptions $options, Closure $output)
     {
-        $this->output = $output;
-        $this->options = $options;
+        parent::__construct($options, $output);
+
         $this->lock = app(Lock::class);
         $this->autoCleanup = app(AutoCleanup::class);
 
         try {
             $this->model = SupervisorProcess::query()->whereKey($options->getUuid())->firstOrFail();
-        } catch (ModelNotFoundException $exception) {
+        } catch (ModelNotFoundException) {
             $this->exit(3);
         }
 
@@ -110,7 +112,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
             // the current number of clients for easy load monitoring.
             try {
                 $this->model->save();
-            } catch (ModelNotFoundException $e) {
+            } catch (ModelNotFoundException) {
                 $this->terminate(4);
             }
 
@@ -133,6 +135,10 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
         $this->client->any(fn($e) => $this->event($e));
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     private function event(Event $event): void
     {
         if ($event->signature() && !$this->lock->get('event:' . $event->signature(), 300)) {
@@ -206,7 +212,7 @@ class TmiClusterClient extends ClusterClient implements Pausable, Restartable, T
 
     protected function exit($status = 0): void
     {
-        $this->log("Got exit signal with code {$status}");
+        $this->log("Got exit signal with code $status");
 
         $this->exitProcess($status);
     }
