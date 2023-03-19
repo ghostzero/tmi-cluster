@@ -13,8 +13,16 @@ class CommandString
         $command = str_replace('@php', PhpBinary::path(), static::$command);
 
         return sprintf(
-            "%s %s --supervisor=%s",
-            $command, $uuid, $options->getSupervisor()
+            "%s %s %s",
+            $command, $uuid, static::toOptionsString($options)
+        );
+    }
+
+    public static function toOptionsString(ProcessOptions $options): string
+    {
+        return sprintf('--supervisor=%s --memory=%s',
+            $options->getSupervisor(),
+            $options->getMemoryLimit()
         );
     }
 }

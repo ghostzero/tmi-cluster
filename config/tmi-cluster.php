@@ -156,6 +156,7 @@ return [
     'process' => [
         'stale' => 90,
         'timeout' => 60,
+        'memory_limit' => 128,
         'periodic_timer' => 2,
     ],
 

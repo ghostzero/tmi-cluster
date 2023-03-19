@@ -46,7 +46,7 @@ class TmiClusterCommand extends Command
         try {
             /** @var Supervisor $supervisor */
             $supervisor = app(SupervisorRepository::class)->create();
-        } catch (DomainException $e) {
+        } catch (DomainException) {
             $this->error('A supervisor with this name is already running.');
 
             return 13;
@@ -116,20 +116,12 @@ class TmiClusterCommand extends Command
 
     private function matchOutputType(?string $type): string
     {
-        switch ($type) {
-            case null:
-            case 'info':
-            case 'out':
-                return 'info';
-            case 'error':
-            case 'err':
-                return 'error';
-            case 'comment':
-                return 'comment';
-            case 'question':
-                return 'question';
-            default:
-                throw new DomainException(sprintf('Unknown output type "%s"', $type));
-        }
+        return match ($type) {
+            null, 'info', 'out' => 'info',
+            'error', 'err' => 'error',
+            'comment' => 'comment',
+            'question' => 'question',
+            default => throw new DomainException(sprintf('Unknown output type "%s"', $type)),
+        };
     }
 }
