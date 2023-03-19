@@ -101,6 +101,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Memory Limit (MB)
+    |--------------------------------------------------------------------------
+    |
+    | This value describes the maximum amount of memory the TMI-Cluster
+    | supervisor may consume before it is terminated and restarted. For
+    | configuring these limits on your process, see the process section.
+    |
+    */
+
+    'memory_limit' => 64,
+
+    /*
+    |--------------------------------------------------------------------------
     | TMI Client Configuration
     |--------------------------------------------------------------------------
     |
