@@ -8,6 +8,9 @@ use Throwable;
 
 class Arr
 {
+    /**
+     * @throws Throwable
+     */
     public static function unique(array $commands, array $staleIds, array $channels, bool $acknowledge = true): array
     {
         $staleIds = [$staleIds];
@@ -29,18 +32,22 @@ class Arr
             }
         }
 
+        return [
+            array_unique(self::tryArrayMerge('$staleIds', ...$staleIds)),
+            array_unique(self::tryArrayMerge('$channels', ...$channels)),
+            array_unique(self::tryArrayMerge('$acknowledged', ...$acknowledged)),
+        ];
+    }
+
+    private static function tryArrayMerge(string $ident, array ...$arrays): array
+    {
         try {
-            return [
-                array_unique(array_merge(...$staleIds)),
-                array_unique(array_merge(...$channels)),
-                array_unique(array_merge(...$acknowledged)),
-            ];
-            // handle rgument #971 must be of type array, stdClass given
+            return array_merge(...$arrays);
+            // handle argument #971 must be of type array, stdClass given
         } catch (Throwable $e) {
-            Log::channel('rsyslog')->error($e->getMessage());
-            Log::channel('rsyslog')->error(print_r($staleIds, true));
-            Log::channel('rsyslog')->error(print_r($channels, true));
-            Log::channel('rsyslog')->error(print_r($acknowledged, true));
+            Log::error($e->getMessage() . ' of ' . $ident, [
+                'exception' => $e,
+            ]);
 
             throw $e;
         }
