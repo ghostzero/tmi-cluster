@@ -33,13 +33,13 @@ class Arr
         }
 
         return [
-            array_unique(self::tryArrayMerge('$staleIds', ...$staleIds)),
-            array_unique(self::tryArrayMerge('$channels', ...$channels)),
-            array_unique(self::tryArrayMerge('$acknowledged', ...$acknowledged)),
+            array_unique(self::castedArrayMerge(...$staleIds)),
+            array_unique(self::castedArrayMerge(...$channels)),
+            array_unique(self::castedArrayMerge(...$acknowledged)),
         ];
     }
 
-    private static function tryArrayMerge(string $ident, array ...$arrays): array
+    private static function castedArrayMerge(array ...$arrays): array
     {
         // cast objects to array to prevent error
         return array_merge(...array_map(fn($array) => (array)$array, $arrays));
