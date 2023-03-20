@@ -14,6 +14,11 @@ use Illuminate\Support\Collection;
 class DatabaseChannelManager implements ChannelManager
 {
     /**
+     * Determines if the channel should be reconnected.
+     */
+    public const OPTION_RECONNECT = 'reconnect';
+
+    /**
      * There is limit 65,535 (2^16-1) placeholders.
      * We will chunk channels in 50K operations.
      */
@@ -115,11 +120,12 @@ class DatabaseChannelManager implements ChannelManager
      */
     public function disconnected(array $channels): array
     {
-        return Channel::query()
-            ->whereNotIn('id', array_map(fn($channel) => $this->getKey($channel), $channels))
+        $potentialChannels = Channel::query()
             ->where(['revoked' => false])
             ->where(['reconnect' => true])
             ->pluck('id')
             ->toArray();
+
+        return array_diff($potentialChannels, array_map(fn($channel) => $this->getKey($channel), $channels));
     }
 }
