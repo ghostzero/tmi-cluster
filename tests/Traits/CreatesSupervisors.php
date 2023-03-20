@@ -44,7 +44,7 @@ trait CreatesSupervisors
         $supervisor->scale($scale);
         $supervisor->loop();
 
-        self::assertCount(2, $supervisor->processes());
+        self::assertCount($scale, $supervisor->processes());
 
         return $supervisor;
     }

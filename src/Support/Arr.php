@@ -3,6 +3,8 @@
 namespace GhostZero\TmiCluster\Support;
 
 use GhostZero\TmiCluster\Contracts\CommandQueue;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class Arr
 {
@@ -27,10 +29,20 @@ class Arr
             }
         }
 
-        return [
-            array_unique(array_merge(...$staleIds)),
-            array_unique(array_merge(...$channels)),
-            array_unique(array_merge(...$acknowledged)),
-        ];
+        try {
+            return [
+                array_unique(array_merge(...$staleIds)),
+                array_unique(array_merge(...$channels)),
+                array_unique(array_merge(...$acknowledged)),
+            ];
+            // handle rgument #971 must be of type array, stdClass given
+        } catch (Throwable $e) {
+            Log::error($e->getMessage());
+            Log::error(print_r($staleIds, true));
+            Log::error(print_r($channels, true));
+            Log::error(print_r($acknowledged, true));
+
+            throw $e;
+        }
     }
 }
