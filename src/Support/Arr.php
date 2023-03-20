@@ -41,16 +41,7 @@ class Arr
 
     private static function tryArrayMerge(string $ident, array ...$arrays): array
     {
-        try {
-            // cast objects to array to prevent error
-            return array_merge(...array_map(fn($array) => (array)$array, $arrays));
-            // handle argument #971 must be of type array, stdClass given
-        } catch (Throwable $e) {
-            Log::error($e->getMessage() . ' of ' . $ident, [
-                'exception' => $e,
-            ]);
-
-            throw $e;
-        }
+        // cast objects to array to prevent error
+        return array_merge(...array_map(fn($array) => (array)$array, $arrays));
     }
 }
