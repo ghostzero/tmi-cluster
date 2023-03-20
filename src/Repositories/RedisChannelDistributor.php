@@ -64,7 +64,6 @@ class RedisChannelDistributor implements SupervisorJoinHandler, ChannelDistribut
      */
     public function flushStale(array $channels, array $staleIds = []): array
     {
-        dump('flushStale', $channels, $staleIds);
         $channels = array_map(static fn($channel) => Channel::sanitize($channel), $channels);
         $channels = $this->restoreQueuedChannelsFromStaleQueues($staleIds, $channels);
 

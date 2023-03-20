@@ -38,12 +38,22 @@ class ArrayTest extends TestCase
         ], $result);
     }
 
+    public function testCastArrayMerge(): void
+    {
+        $result = Arr::merge(
+            ['test', 'test2'],
+            json_decode(json_encode([0 => 'test3', 1 => 'test4']))
+        );
+
+        $this->assertEquals(['test', 'test2', 'test3', 'test4'], $result);
+    }
+
     /**
      * @param array $options
      * @return mixed
      * @throws JsonException
      */
-    private function fake(array $options = [])
+    private function fake(array $options = []): mixed
     {
         // encode json string
         $encoded = json_encode([

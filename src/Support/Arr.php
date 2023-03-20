@@ -3,14 +3,10 @@
 namespace GhostZero\TmiCluster\Support;
 
 use GhostZero\TmiCluster\Contracts\CommandQueue;
-use Illuminate\Support\Facades\Log;
-use Throwable;
+use stdClass;
 
 class Arr
 {
-    /**
-     * @throws Throwable
-     */
     public static function unique(array $commands, array $staleIds, array $channels, bool $acknowledge = true): array
     {
         $staleIds = [$staleIds];
@@ -33,15 +29,14 @@ class Arr
         }
 
         return [
-            array_unique(self::castedArrayMerge(...$staleIds)),
-            array_unique(self::castedArrayMerge(...$channels)),
-            array_unique(self::castedArrayMerge(...$acknowledged)),
+            array_unique(self::merge(...$staleIds)),
+            array_unique(self::merge(...$channels)),
+            array_unique(self::merge(...$acknowledged)),
         ];
     }
 
-    private static function castedArrayMerge(array ...$arrays): array
+    public static function merge(array|stdClass ...$arrays): array
     {
-        // cast objects to array to prevent error
-        return array_merge(...array_map(fn($array) => (array)$array, $arrays));
+        return array_merge(...array_map(fn($array) => is_array($array) ? $array : (array)$array, $arrays));
     }
 }
