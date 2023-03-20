@@ -17,6 +17,7 @@ class TmiClusterHealthCommand extends Command
      */
     protected $signature = 'tmi-cluster:health
                                 {--host-only : Only check all supervisors on the same host}
+                                {--at-least-one : Check if at least one process is healthy}
                                 {--hostname= : Change the hostname to check for}';
 
     /**
@@ -38,7 +39,7 @@ class TmiClusterHealthCommand extends Command
             ? $this->getHostSupervisors($repository)
             : $repository->all();
 
-        if (Health::isOperational($supervisors)) {
+        if (Health::isOperational($supervisors, $this->option('at-least-one'))) {
             $this->info('TMI cluster is healthy.');
             return 0;
         }

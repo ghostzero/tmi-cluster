@@ -13,7 +13,7 @@ class Health
      */
     private const INRESPONSIVE_THRESHOLD = 60;
 
-    public static function isOperational(Collection $supervisors): bool
+    public static function isOperational(Collection $supervisors, bool $atLeastOneProcess = false): bool
     {
         $operational = $supervisors
             ->sum(function (Supervisor $supervisor) {
@@ -26,6 +26,10 @@ class Health
             ->sum(function (Supervisor $supervisor) {
                 return $supervisor->processes->count();
             });
+
+        if ($atLeastOneProcess) {
+            return $count > 0;
+        }
 
         return $count > 0 && $operational === $count;
     }
