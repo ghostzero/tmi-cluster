@@ -20,7 +20,9 @@ class ProcessOptions
 
     public function getWorkingDirectory(): string
     {
-        return app_path('..');
+        return app()->environment('testing')
+            ? base_path('tests/laravel')
+            : base_path();
     }
 
     public function getSupervisor(): string

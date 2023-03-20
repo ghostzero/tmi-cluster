@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+
+// simulate working command
+
+do {
+    echo "working...\n";
+    sleep(1);
+} while (true);
