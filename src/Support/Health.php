@@ -28,7 +28,7 @@ class Health
             });
 
         if ($atLeastOneProcess) {
-            return $count > 0;
+            return $operational > 0;
         }
 
         return $count > 0 && $operational === $count;
