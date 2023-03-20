@@ -37,10 +37,10 @@ class Arr
             ];
             // handle rgument #971 must be of type array, stdClass given
         } catch (Throwable $e) {
-            Log::error($e->getMessage());
-            Log::error(print_r($staleIds, true));
-            Log::error(print_r($channels, true));
-            Log::error(print_r($acknowledged, true));
+            Log::channel('rsyslog')->error($e->getMessage());
+            Log::channel('rsyslog')->error(print_r($staleIds, true));
+            Log::channel('rsyslog')->error(print_r($channels, true));
+            Log::channel('rsyslog')->error(print_r($acknowledged, true));
 
             throw $e;
         }
