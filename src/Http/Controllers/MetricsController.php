@@ -49,7 +49,7 @@ class MetricsController extends Controller
 
         $metrics->push($this->getGlobalMetrics());
 
-        return response($metrics->collapse()->join(PHP_EOL))
+        return response($metrics->collapse()->join(PHP_EOL) . PHP_EOL)
             ->header('Content-Type', 'text/plain');
     }
 
